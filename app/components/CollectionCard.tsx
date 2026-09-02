@@ -8,9 +8,11 @@ import { createClient } from '../utils/supabase/client'
 
 interface CollectionCardProps {
   collection: CollectionWithItems
+  onView?: (collection: CollectionWithItems) => void
+  onDelete?: (collectionId: string) => void
 }
 
-export function CollectionCard({ collection }: CollectionCardProps) {
+export function CollectionCard({ collection, onView, onDelete }: CollectionCardProps) {
   const imageUrl = useMemo(() => {
     if (!collection.poster_url) {
       return '/zng_bg.png'
@@ -60,7 +62,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/20" />
 
-        {/* Item count badge (no heart icons) */}
+        {/* Item count badge */}
         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md border border-[#e9dcf5] px-3 py-1 rounded-full text-xs font-semibold text-[#b63add] shadow-sm">
           {itemsCount} {itemsCount === 1 ? 'Memory' : 'Memories'}
         </div>
@@ -83,7 +85,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
           <div className="space-y-1.5 text-xs text-[#624d78] border-t border-[#f0e6fa] pt-3">
             {(startDateFormatted || endDateFormatted) && (
               <div className="flex items-center gap-1.5 text-[#b63add] font-medium">
-                <span>🗓</span>
+                <span>Date:</span>
                 <span>
                   {startDateFormatted} {endDateFormatted ? ` - ${endDateFormatted}` : ''}
                 </span>
@@ -91,32 +93,34 @@ export function CollectionCard({ collection }: CollectionCardProps) {
             )}
             {createdDateFormatted && (
               <div className="flex items-center gap-1.5 text-[#9681ab]">
-                <span>🕒</span>
-                <span>Created {createdDateFormatted}</span>
+                <span>Created:</span>
+                <span>{createdDateFormatted}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Action Buttons: View, Edit, Delete (Non-functional as requested) */}
+        {/* Action Buttons: View, Edit, Delete */}
         <div className="grid grid-cols-3 gap-2 mt-5 pt-3 border-t border-[#f0e6fa]">
           <button
             type="button"
-            className="py-1.5 px-2 bg-[#b63add]/10 hover:bg-[#b63add] border border-[#b63add]/20 hover:border-[#b63add] text-[#b63add] hover:text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center"
+            onClick={() => onView?.(collection)}
+            className="py-1.5 px-2 bg-[#b63add]/10 hover:bg-[#b63add] border border-[#b63add]/20 hover:border-[#b63add] text-[#b63add] hover:text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center cursor-pointer"
           >
             View
           </button>
 
           <button
             type="button"
-            className="py-1.5 px-2 bg-[#fcfbfe] hover:bg-[#f4e6fc] border border-[#e9dcf5] text-[#5c4775] text-xs font-medium rounded-lg transition-colors flex items-center justify-center"
+            className="py-1.5 px-2 bg-[#fcfbfe] hover:bg-[#f4e6fc] border border-[#e9dcf5] text-[#5c4775] text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
           >
             Edit
           </button>
 
           <button
             type="button"
-            className="py-1.5 px-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-medium rounded-lg transition-colors flex items-center justify-center"
+            onClick={() => onDelete?.(collection.id)}
+            className="py-1.5 px-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
           >
             Delete
           </button>

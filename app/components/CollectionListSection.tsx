@@ -1,37 +1,47 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
 import { CollectionCard } from './CollectionCard'
 import { CreateCollectionModal } from './CreateCollectionModal'
+import { MemoryBookModal } from './MemoryBookModal'
+import { deleteCollection } from '../actions/collection'
 
 interface CollectionListSectionProps {
   initialCollections: CollectionWithItems[]
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 25 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: 'easeOut' as const },
-  },
-}
-
 export function CollectionListSection({ initialCollections }: CollectionListSectionProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const collections = initialCollections || []
+  const [collections, setCollections] = useState<CollectionWithItems[]>(initialCollections)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [activeViewCollection, setActiveViewCollection] = useState<CollectionWithItems | null>(null)
+
+
+  const handleDeleteCollection = async (collectionId: string) => {
+    if (confirm('Are you sure you want to delete this collection?')) {
+      const res = await deleteCollection(collectionId)
+      if (res?.error) {
+        console.warn('DB delete error, removing from local state:', res.error)
+      }
+      setCollections((prev) => prev.filter((col) => col.id !== collectionId))
+    }
+  }
+
+  const handleUpdateCollectionItems = (updatedItems: any[]) => {
+    if (activeViewCollection) {
+      const updated = { ...activeViewCollection, collection_items: updatedItems }
+      setActiveViewCollection(updated)
+      setCollections((prev) =>
+        prev.map((col) => (col.id === updated.id ? updated : col))
+      )
+    }
+  }
+
+  const handleCollectionCreated = (newCollection: CollectionWithItems) => {
+    setCollections((prev) => [newCollection, ...prev])
+  }
+  console.log(collections)
 
   return (
     <section id="collections" className="w-full py-16 md:py-24 bg-[#fcfbfe] text-[#1f0c33] relative z-20">
@@ -53,7 +63,7 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsCreateModalOpen(true)}
             className="px-6 py-3 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white font-semibold text-sm transition-all shadow-lg shadow-[#b63add]/25 flex items-center gap-2 self-start sm:self-auto cursor-pointer"
           >
             <span className="text-lg leading-none">+</span>
@@ -63,19 +73,17 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
 
         {/* 4 Collections per row Grid Layout */}
         {collections.length > 0 ? (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {collections.map((collection) => (
-              <motion.div key={collection.id} variants={itemVariants}>
-                <CollectionCard collection={collection} />
-              </motion.div>
+              <div key={collection.id}>
+                <CollectionCard
+                  collection={collection}
+                  onView={(col) => setActiveViewCollection(col)}
+                  onDelete={handleDeleteCollection}
+                />
+              </div>
             ))}
-          </motion.div>
+          </div>
         ) : (
           /* Empty state */
           <motion.div
@@ -88,8 +96,8 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
               Start building your digital Valentine memory book by creating your first memory collection!
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-6 py-2.5 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white font-semibold text-sm transition-all shadow-md shadow-[#b63add]/30"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-6 py-2.5 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white font-semibold text-sm transition-all shadow-md shadow-[#b63add]/30 cursor-pointer"
             >
               + Create First Collection
             </button>
@@ -97,10 +105,17 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
         )}
       </div>
 
-      {/* Create Collection Modal */}
       <CreateCollectionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={handleCollectionCreated}
+      />
+
+      <MemoryBookModal
+        collection={activeViewCollection}
+        isOpen={!!activeViewCollection}
+        onClose={() => setActiveViewCollection(null)}
+        onUpdateCollectionItems={handleUpdateCollectionItems}
       />
     </section>
   )

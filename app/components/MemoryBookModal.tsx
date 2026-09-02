@@ -1,0 +1,675 @@
+'use client'
+
+import React, { forwardRef, useMemo, useRef, useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CollectionWithItems } from '../types/collection'
+import { CollectionItem } from '../types/collection_item'
+import { handleGetUrl } from '../helpers/file_url'
+import { createClient } from '../utils/supabase/client'
+import { MemoryItemFormModal } from './MemoryItemFormModal'
+import { deleteCollectionItem, updateCollectionItem } from '../actions/collection_items'
+
+// Dynamically import HTMLFlipBook to disable SSR
+const HTMLFlipBook = dynamic(() => import('react-pageflip'), { ssr: false }) as any
+
+interface MemoryBookModalProps {
+  collection: CollectionWithItems | null
+  isOpen: boolean
+  onClose: () => void
+  onUpdateCollectionItems?: (updatedItems: CollectionItem[]) => void
+}
+
+interface PageProps {
+  children: React.ReactNode
+  className?: string
+}
+
+// Helper function to reliably resolve image URLs
+function resolveImageUrl(imagePath: string | null): string | null {
+  if (!imagePath) return null
+  if (
+    imagePath.startsWith('/') ||
+    imagePath.startsWith('http://') ||
+    imagePath.startsWith('https://') ||
+    imagePath.startsWith('blob:') ||
+    imagePath.startsWith('data:')
+  ) {
+    return imagePath
+  }
+  try {
+    const supabase = createClient()
+    return handleGetUrl(supabase, imagePath)
+  } catch {
+    return imagePath
+  }
+}
+
+// ForwardRef wrapper required by react-pageflip
+const BookPage = forwardRef<HTMLDivElement, PageProps>(({ children, className = '' }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={`relative w-full h-full bg-white border border-[#e9dcf5] p-6 sm:p-8 flex flex-col justify-between overflow-hidden select-none shadow-md ${className}`}
+    >
+      {children}
+    </div>
+  )
+})
+BookPage.displayName = 'BookPage'
+
+// Individual Collection Item Page Component with Isolated File Dropzone
+function ItemPageContent({
+  item,
+  pageNum,
+  onEditItem,
+  onDeleteItem,
+  onImageChanged,
+}: {
+  item: CollectionItem
+  pageNum: number
+  onEditItem: (item: CollectionItem) => void
+  onDeleteItem: (itemId: string) => void
+  onImageChanged: (itemId: string, newImageUrl: string | null) => void
+}) {
+  const serverResolvedUrl = useMemo(() => {
+    return resolveImageUrl(item.image_url)
+  }, [item.image_url])
+
+  const [localImageUrl, setLocalImageUrl] = useState<string | null>(serverResolvedUrl)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const dropzoneRef = useRef<HTMLLabelElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setLocalImageUrl(serverResolvedUrl)
+  }, [serverResolvedUrl])
+
+  const processFile = (file: File) => {
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      alert('Only PNG, JPG, and WEBP image formats are supported.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string
+      if (dataUrl) {
+        setLocalImageUrl(dataUrl)
+        onImageChanged(item.id, dataUrl)
+
+        // Asynchronously update server item
+        updateCollectionItem({
+          id: item.id,
+          image_url: dataUrl,
+        }).catch((err) => console.error('Failed to save image:', err))
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Native Capture-Phase Event Listeners
+  useEffect(() => {
+    const el = dropzoneRef.current
+    if (!el) return
+
+    const stopNativeMouse = (e: Event) => {
+      e.stopPropagation()
+      if (e.stopImmediatePropagation) {
+        e.stopImmediatePropagation()
+      }
+    }
+
+    const handleNativeDragOver = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.stopImmediatePropagation) {
+        e.stopImmediatePropagation()
+      }
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy'
+      }
+      setIsDragging(true)
+    }
+
+    const handleNativeDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.stopImmediatePropagation) {
+        e.stopImmediatePropagation()
+      }
+      setIsDragging(false)
+    }
+
+    const handleNativeDrop = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.stopImmediatePropagation) {
+        e.stopImmediatePropagation()
+      }
+      setIsDragging(false)
+
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        processFile(e.dataTransfer.files[0])
+      }
+    }
+
+    el.addEventListener('mousedown', stopNativeMouse, true)
+    el.addEventListener('mouseup', stopNativeMouse, true)
+    el.addEventListener('pointerdown', stopNativeMouse, true)
+    el.addEventListener('pointerup', stopNativeMouse, true)
+    el.addEventListener('touchstart', stopNativeMouse, true)
+    el.addEventListener('touchend', stopNativeMouse, true)
+
+    el.addEventListener('dragenter', handleNativeDragOver, true)
+    el.addEventListener('dragover', handleNativeDragOver, true)
+    el.addEventListener('dragleave', handleNativeDragLeave, true)
+    el.addEventListener('drop', handleNativeDrop, true)
+
+    return () => {
+      el.removeEventListener('mousedown', stopNativeMouse, true)
+      el.removeEventListener('mouseup', stopNativeMouse, true)
+      el.removeEventListener('pointerdown', stopNativeMouse, true)
+      el.removeEventListener('pointerup', stopNativeMouse, true)
+      el.removeEventListener('touchstart', stopNativeMouse, true)
+      el.removeEventListener('touchend', stopNativeMouse, true)
+
+      el.removeEventListener('dragenter', handleNativeDragOver, true)
+      el.removeEventListener('dragover', handleNativeDragOver, true)
+      el.removeEventListener('dragleave', handleNativeDragLeave, true)
+      el.removeEventListener('drop', handleNativeDrop, true)
+    }
+  }, [item.id])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation()
+    const files = e.target.files
+    if (files && files.length > 0) {
+      processFile(files[0])
+    }
+  }
+
+  const handleRemoveImage = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setLocalImageUrl(null)
+    onImageChanged(item.id, null)
+    updateCollectionItem({
+      id: item.id,
+      image_url: null,
+    }).catch((err) => console.error('Failed to clear image:', err))
+  }
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const memoryDate = formatDate(item.memory_date)
+
+  return (
+    <div className="h-full flex flex-col justify-between">
+      {/* Header with Date & Action Buttons */}
+      <div>
+        <div className="flex items-center justify-between border-b border-[#e9dcf5] pb-2 mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#b63add]">
+            Memory Item
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEditItem(item)
+              }}
+              className="px-2.5 py-1 bg-[#b63add]/10 hover:bg-[#b63add] text-[#b63add] hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteItem(item.id)
+              }}
+              className="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-1">
+          <h4 className="text-lg font-bold text-[#1f0c33] line-clamp-2">
+            {item.name || 'Untitled Memory'}
+          </h4>
+        </div>
+        {memoryDate && (
+          <span className="text-xs font-medium text-[#624d78] block mb-2">
+            Date: {memoryDate}
+          </span>
+        )}
+      </div>
+
+      {/* Isolated Image Preview or Interactive Drag & Drop Dropzone */}
+      <div
+        className="my-2 flex-1 flex items-center justify-center min-h-[150px]"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        {localImageUrl ? (
+          <div className="relative group w-full h-40 sm:h-48 rounded-xl overflow-hidden border border-[#e9dcf5] shadow-sm">
+            <img
+              src={localImageUrl}
+              alt={item.name || 'Memory Image'}
+              className="w-full h-full object-cover"
+            />
+            {/* Change / Remove Image Hover Overlay */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="px-3 py-1.5 bg-white text-rose-600 font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-rose-50 transition-colors"
+              >
+                Remove
+              </button>
+              <label
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-1.5 bg-[#b63add] text-white font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-[#9c28bd] transition-colors"
+              >
+                Change Image
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
+                  onChange={handleFileChange}
+                  onClick={(e) => e.stopPropagation()}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+        ) : (
+          <label
+            ref={dropzoneRef}
+            className={`w-full h-40 sm:h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${isDragging
+                ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]'
+                : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
+              }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/webp"
+              onChange={handleFileChange}
+              onClick={(e) => e.stopPropagation()}
+              className="hidden"
+            />
+            <div className="w-9 h-9 rounded-full bg-[#f4e6fc] text-[#b63add] flex items-center justify-center text-lg font-bold mb-1.5">
+              +
+            </div>
+            <p className="text-xs font-semibold text-[#b63add]">
+              Drop your image here
+            </p>
+            <p className="text-[10px] text-[#9681ab] mt-0.5">
+              Supports PNG, JPG, WEBP
+            </p>
+          </label>
+        )}
+      </div>
+
+      {/* Description & Page Number */}
+      <div className="border-t border-[#f0e6fa] pt-2.5 mt-auto flex items-end justify-between">
+        <p className="text-xs text-[#624d78] leading-relaxed line-clamp-2 max-w-[85%]">
+          {item.description || 'No notes added for this memory moment yet.'}
+        </p>
+        <span className="text-[10px] font-medium text-[#9681ab]">
+          {pageNum}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+export function MemoryBookModal({
+  collection,
+  isOpen,
+  onClose,
+  onUpdateCollectionItems,
+}: MemoryBookModalProps) {
+  const flipBookRef = useRef<any>(null)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [items, setItems] = useState<CollectionItem[]>([])
+
+  // Page number input state
+  const [pageInput, setPageInput] = useState('1')
+
+  // Item form modal state
+  const [isItemFormOpen, setIsItemFormOpen] = useState(false)
+  const [itemToEdit, setItemToEdit] = useState<CollectionItem | null>(null)
+
+  useEffect(() => {
+    if (collection?.collection_items) {
+      setItems(collection.collection_items)
+    } else {
+      setItems([])
+    }
+  }, [collection])
+
+  const maxPages = useMemo(() => {
+    // 1 Front Cover + items count + 1 Back Cover
+    return Math.max(1, items.length + 2)
+  }, [items])
+
+  useEffect(() => {
+    setPageInput((currentPage + 1).toString())
+  }, [currentPage])
+
+  const posterUrl = useMemo(() => {
+    return resolveImageUrl(collection?.poster_url || null)
+  }, [collection?.poster_url])
+
+  if (!isOpen || !collection) return null
+
+  const handleNext = () => {
+    if (flipBookRef.current) {
+      flipBookRef.current.pageFlip().flipNext()
+    }
+  }
+
+  const handlePrev = () => {
+    if (flipBookRef.current) {
+      flipBookRef.current.pageFlip().flipPrev()
+    }
+  }
+
+  const onPageFlip = (e: any) => {
+    setCurrentPage(e.data)
+  }
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valStr = e.target.value
+    setPageInput(valStr)
+
+    const num = parseInt(valStr, 10)
+    if (!isNaN(num)) {
+      const clamped = Math.max(1, Math.min(num, maxPages))
+      if (flipBookRef.current) {
+        flipBookRef.current.pageFlip().flip(clamped - 1)
+      }
+    }
+  }
+
+  const handlePageInputBlur = () => {
+    const num = parseInt(pageInput, 10)
+    if (isNaN(num) || num < 1) {
+      setPageInput('1')
+      if (flipBookRef.current) flipBookRef.current.pageFlip().flip(0)
+    } else if (num > maxPages) {
+      setPageInput(maxPages.toString())
+      if (flipBookRef.current) flipBookRef.current.pageFlip().flip(maxPages - 1)
+    }
+  }
+
+  const handleCreateMemoryClick = () => {
+    setItemToEdit(null)
+    setIsItemFormOpen(true)
+  }
+
+  const handleEditItemClick = (item: CollectionItem) => {
+    setItemToEdit(item)
+    setIsItemFormOpen(true)
+  }
+
+  const handleDeleteItemClick = async (itemId: string) => {
+    if (confirm('Are you sure you want to delete this memory item?')) {
+      const res = await deleteCollectionItem(itemId)
+      if (res?.error) {
+        console.warn('DB delete error, removing from local state:', res.error)
+      }
+      const updated = items.filter((it) => it.id !== itemId)
+      setItems(updated)
+      onUpdateCollectionItems?.(updated)
+    }
+  }
+
+  const handleImageChanged = (itemId: string, newImageUrl: string | null) => {
+    const updated = items.map((it) => (it.id === itemId ? { ...it, image_url: newImageUrl } : it))
+    setItems(updated)
+    onUpdateCollectionItems?.(updated)
+  }
+
+  const handleItemFormSuccess = (savedItem: CollectionItem, isEdit: boolean) => {
+    let updated: CollectionItem[]
+    if (isEdit) {
+      updated = items.map((it) => (it.id === savedItem.id ? savedItem : it))
+    } else {
+      updated = [...items, savedItem]
+    }
+    setItems(updated)
+    onUpdateCollectionItems?.(updated)
+  }
+
+  return (
+    <AnimatePresence>
+      <div key="memory-book-modal-wrapper" className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 overflow-hidden">
+        {/* Dimmed Background Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/85 backdrop-blur-md"
+        />
+
+        {/* Modal Container */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', duration: 0.5 }}
+          className="relative z-10 w-full max-w-5xl flex flex-col items-center justify-center"
+        >
+          {/* Top Toolbar: Title, + Create Memory Button, Close Button */}
+          <div className="w-full flex items-center justify-between mb-4 px-4 text-white">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#b63add] block">
+                Memory Book
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white line-clamp-1">
+                {collection.name || 'Untitled Collection'}
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Create Memory Button */}
+              <button
+                type="button"
+                onClick={handleCreateMemoryClick}
+                className="px-4 py-2 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white text-xs font-semibold shadow-lg shadow-[#b63add]/30 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>+</span>
+                <span>Create Memory</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* FlipBook Container for 2-Page Spread */}
+          <div className="relative shadow-2xl rounded-2xl overflow-hidden p-2 sm:p-4 bg-gradient-to-r from-[#b63add]/30 via-transparent to-[#b63add]/30 max-w-full">
+            <HTMLFlipBook
+              ref={flipBookRef}
+              width={360}
+              height={500}
+              size="fixed"
+              minWidth={280}
+              maxWidth={420}
+              minHeight={400}
+              maxHeight={550}
+              maxShadowOpacity={0.5}
+              showCover={true}
+              usePortrait={false}
+              mobileScrollSupport={true}
+              onFlip={onPageFlip}
+              className="mx-auto rounded-lg"
+            >
+              {/* PAGE 1: Front Cover */}
+              <BookPage key="page-front-cover" className="!bg-gradient-to-br !from-[#b63add] !to-[#8b22b3] !text-white border-2 border-white/20">
+                <div className="h-full flex flex-col justify-between items-center text-center p-4">
+                  <div className="w-full border-b border-white/20 pb-3">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/80">
+                      Valentine Memory Book
+                    </span>
+                  </div>
+
+                  <div className="my-auto flex flex-col items-center max-w-xs">
+                    {posterUrl && (
+                      <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg mb-4">
+                        <img
+                          src={posterUrl}
+                          alt="Collection Cover"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <h2 className="text-2xl font-black text-white mb-2 leading-tight">
+                      {collection.name || 'Untitled Collection'}
+                    </h2>
+                    <p className="text-xs text-white/80 line-clamp-3 leading-relaxed">
+                      {collection.description || 'A cherished collection of romantic memories.'}
+                    </p>
+                  </div>
+
+                  <div className="w-full border-t border-white/20 pt-3">
+                    <span className="text-[11px] font-semibold text-white/90">
+                      Open to Explore
+                    </span>
+                  </div>
+                </div>
+              </BookPage>
+
+              {/* Inner Item Pages */}
+              {items.length > 0 ? (
+                items.map((item, idx) => (
+                  <BookPage key={`item-page-${item.id && item.id.trim() !== '' ? item.id : 'idx-' + idx}`}>
+                    <ItemPageContent
+                      item={item}
+                      pageNum={idx + 1}
+                      onEditItem={handleEditItemClick}
+                      onDeleteItem={handleDeleteItemClick}
+                      onImageChanged={handleImageChanged}
+                    />
+                  </BookPage>
+                ))
+              ) : (
+                <BookPage key="page-empty-collection">
+                  <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                    <h4 className="text-base font-bold text-[#1f0c33] mb-2">
+                      Empty Collection
+                    </h4>
+                    <p className="text-xs text-[#624d78] mb-4">
+                      No memory items added to this collection yet.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCreateMemoryClick}
+                      className="px-4 py-2 rounded-xl bg-[#b63add] text-white text-xs font-semibold shadow cursor-pointer"
+                    >
+                      + Add First Memory
+                    </button>
+                  </div>
+                </BookPage>
+              )}
+
+              {/* FINAL PAGE: Back Cover */}
+              <BookPage key="page-back-cover" className="!bg-[#1f0c33] !text-white border-2 border-[#b63add]/30">
+                <div className="h-full flex flex-col justify-between items-center text-center p-6">
+                  <div className="w-full border-b border-white/10 pb-3">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#b63add]">
+                      The End
+                    </span>
+                  </div>
+
+                  <div className="my-auto">
+                    <h3 className="text-xl font-bold text-[#1f0c33] mb-2">
+                      Memories To Be Continued
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      ValentineBook Memory Vault
+                    </p>
+                  </div>
+
+                  <div className="w-full border-t border-white/10 pt-3">
+                    <span className="text-[10px] text-gray-500">
+                      Created with love
+                    </span>
+                  </div>
+                </div>
+              </BookPage>
+            </HTMLFlipBook>
+          </div>
+
+          {/* Bottom Navigation Controls & Page Number Input */}
+          <div className="flex items-center gap-4 mt-5">
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all cursor-pointer"
+            >
+              Previous Page
+            </button>
+
+            {/* Interactive Page Input Navigation */}
+            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white">
+              <span className="text-gray-300 font-medium">Page</span>
+              <input
+                type="number"
+                min={1}
+                max={maxPages}
+                value={pageInput}
+                onChange={handlePageInputChange}
+                onBlur={handlePageInputBlur}
+                className="w-12 bg-white/20 text-center font-bold text-white rounded px-1 py-0.5 outline-none border border-white/30 focus:border-[#b63add]"
+              />
+              <span className="text-gray-300 font-medium">/ {maxPages}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              className="px-4 py-2 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white text-xs font-semibold shadow-lg shadow-[#b63add]/30 transition-all cursor-pointer"
+            >
+              Next Page
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Memory Item Form Modal (Create & Edit) */}
+      <MemoryItemFormModal
+        isOpen={isItemFormOpen}
+        onClose={() => setIsItemFormOpen(false)}
+        collectionId={collection.id}
+        itemToEdit={itemToEdit}
+        onSuccess={handleItemFormSuccess}
+      />
+    </AnimatePresence>
+  )
+}
