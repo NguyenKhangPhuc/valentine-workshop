@@ -34,6 +34,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      collection_items: {
+        Row: {
+          collection_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          memory_date: string | null
+          name: string | null
+          order: number | null
+        }
+        Insert: {
+          collection_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          memory_date?: string | null
+          name?: string | null
+          order?: number | null
+        }
+        Update: {
+          collection_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          memory_date?: string | null
+          name?: string | null
+          order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collections: {
         Row: {
           created_at: string
