@@ -1,104 +1,104 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
-import { type SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/app/types/database.types'
+// import { createServerClient } from '@supabase/ssr'
+// import { NextResponse, type NextRequest } from 'next/server'
+// import { type SupabaseClient } from '@supabase/supabase-js'
+// import { Database } from '@/app/types/database.types'
 
-export type UpdateSessionResult = {
-    supabaseResponse: NextResponse
-    supabase: SupabaseClient<Database>
-}
+// export type UpdateSessionResult = {
+//     supabaseResponse: NextResponse
+//     supabase: SupabaseClient<Database>
+// }
 
-/**
- * Refreshes the Supabase session cookie and returns the shared client.
- * Uses getClaims() (JWT-local decode, no extra network round-trip) instead of
- * getUser() so callers can call getUser() exactly once on the shared client.
- *
- * Returns { supabaseResponse, supabase } in all cases.
- * Callers should check supabaseResponse.status !== 200 to detect redirects.
- */
-export async function updateSession(request: NextRequest): Promise<UpdateSessionResult> {
-    let supabaseResponse = NextResponse.next({
-        request,
-    })
+// /**
+//  * Refreshes the Supabase session cookie and returns the shared client.
+//  * Uses getClaims() (JWT-local decode, no extra network round-trip) instead of
+//  * getUser() so callers can call getUser() exactly once on the shared client.
+//  *
+//  * Returns { supabaseResponse, supabase } in all cases.
+//  * Callers should check supabaseResponse.status !== 200 to detect redirects.
+//  */
+// export async function updateSession(request: NextRequest): Promise<UpdateSessionResult> {
+//     let supabaseResponse = NextResponse.next({
+//         request,
+//     })
 
-    // With Fluid compute, don't put this client in a global environment
-    // variable. Always create a new one on each request.
-    const supabase = createServerClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
-                },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-                    supabaseResponse = NextResponse.next({
-                        request,
-                    })
-                    cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
-                },
-            },
-        }
-    )
+//     // With Fluid compute, don't put this client in a global environment
+//     // variable. Always create a new one on each request.
+//     const supabase = createServerClient<Database>(
+//         process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+//         {
+//             cookies: {
+//                 getAll() {
+//                     return request.cookies.getAll()
+//                 },
+//                 setAll(cookiesToSet) {
+//                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+//                     supabaseResponse = NextResponse.next({
+//                         request,
+//                     })
+//                     cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+//                 },
+//             },
+//         }
+//     )
 
-    // Do not run code between createServerClient and
-    // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
+//     // Do not run code between createServerClient and
+//     // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
+//     // issues with users being randomly logged out.
 
-    // IMPORTANT: If you remove getClaims() and you use server-side rendering
-    // with the Supabase client, your users may be randomly logged out.
-    const { data } = await supabase.auth.getClaims()
-    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const claims = data?.claims
-    const pathname = request.nextUrl.pathname;
-    const isBaseProjectsPage = pathname === '/projects';
-    const pathParts = pathname.split('/')
-    const isProjectDetailPage =
-        pathParts.length === 3 &&
-        pathParts[1] === 'projects' &&
-        UUID_REGEX.test(pathParts[2]);
-    const isAccessingProjectSystem = isBaseProjectsPage || isProjectDetailPage;
+//     // IMPORTANT: If you remove getClaims() and you use server-side rendering
+//     // with the Supabase client, your users may be randomly logged out.
+//     const { data } = await supabase.auth.getClaims()
+//     const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+//     const claims = data?.claims
+//     const pathname = request.nextUrl.pathname;
+//     const isBaseProjectsPage = pathname === '/projects';
+//     const pathParts = pathname.split('/')
+//     const isProjectDetailPage =
+//         pathParts.length === 3 &&
+//         pathParts[1] === 'projects' &&
+//         UUID_REGEX.test(pathParts[2]);
+//     const isAccessingProjectSystem = isBaseProjectsPage || isProjectDetailPage;
 
-    if (
-        !claims &&
-        !pathname.startsWith('/login') &&
-        !pathname.startsWith('/sign-up') &&
-        !pathname.startsWith('/auth/callback') &&
-        !pathname.startsWith('/forget-password') &&
-        !pathname.startsWith('/reset-password') &&
-        !pathname.startsWith('/terms-and-conditions') &&
-        !pathname.startsWith('/privacy-policy') &&
-        !pathname.startsWith('/about') &&
-        !isAccessingProjectSystem &&
-        pathname !== '/'
-    ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return { supabaseResponse: NextResponse.redirect(url), supabase }
-    }
+//     if (
+//         !claims &&
+//         !pathname.startsWith('/login') &&
+//         !pathname.startsWith('/sign-up') &&
+//         !pathname.startsWith('/auth/callback') &&
+//         !pathname.startsWith('/forget-password') &&
+//         !pathname.startsWith('/reset-password') &&
+//         !pathname.startsWith('/terms-and-conditions') &&
+//         !pathname.startsWith('/privacy-policy') &&
+//         !pathname.startsWith('/about') &&
+//         !isAccessingProjectSystem &&
+//         pathname !== '/'
+//     ) {
+//         const url = request.nextUrl.clone()
+//         url.pathname = '/login'
+//         return { supabaseResponse: NextResponse.redirect(url), supabase }
+//     }
 
-    if (
-        claims &&
-        (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/sign-up'))
-    ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return { supabaseResponse: NextResponse.redirect(url), supabase }
-    }
+//     if (
+//         claims &&
+//         (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/sign-up'))
+//     ) {
+//         const url = request.nextUrl.clone()
+//         url.pathname = '/'
+//         return { supabaseResponse: NextResponse.redirect(url), supabase }
+//     }
 
-    // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-    // creating a new response object with NextResponse.next() make sure to:
-    // 1. Pass the request in it, like so:
-    //    const myNewResponse = NextResponse.next({ request })
-    // 2. Copy over the cookies, like so:
-    //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-    // 3. Change the myNewResponse object to fit your needs, but avoid changing
-    //    the cookies!
-    // 4. Finally:
-    //    return myNewResponse
-    // If this is not done, you may be causing the browser and server to go out
-    // of sync and terminate the user's session prematurely!
+//     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
+//     // creating a new response object with NextResponse.next() make sure to:
+//     // 1. Pass the request in it, like so:
+//     //    const myNewResponse = NextResponse.next({ request })
+//     // 2. Copy over the cookies, like so:
+//     //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
+//     // 3. Change the myNewResponse object to fit your needs, but avoid changing
+//     //    the cookies!
+//     // 4. Finally:
+//     //    return myNewResponse
+//     // If this is not done, you may be causing the browser and server to go out
+//     // of sync and terminate the user's session prematurely!
 
-    return { supabaseResponse, supabase }
-}
+//     return { supabaseResponse, supabase }
+// }

@@ -4,9 +4,9 @@ import { Collection, CollectionInsert } from "../types/collection"
 import { createClient } from "../utils/supabase/server"
 
 
-export const getAllCollections = async () => {
+export const getAllCollectionsWithCollectionItems = async () => {
     const supabase = await createClient()
-    const { data, error } = await supabase.from('collections').select('*')
+    const { data, error } = await supabase.from('collections').select('*, collection_items (*)')
     if (error) {
         console.log(error)
         return { data, error: "Failed to find all collections" }
@@ -21,6 +21,7 @@ export const createNewCollection = async (collection: CollectionInsert) => {
         console.log(error)
         return { error: "Failed to create new collection" }
     }
+    console.log(data)
     return { data, error }
 }
 

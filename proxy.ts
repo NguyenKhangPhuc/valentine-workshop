@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { updateSession } from "./app/utils/supabase/proxy"
+// import { updateSession } from "./app/utils/supabase/proxy"
 
 
 export async function proxy(request: NextRequest) {
@@ -10,8 +10,8 @@ export async function proxy(request: NextRequest) {
     // 2. Session refresh + shared Supabase client.
     //    updateSession creates the client ONCE and handles auth redirects.
     //    All downstream handlers receive this same client — no re-instantiation.
-    const { supabaseResponse, supabase } = await updateSession(request)
-    if (supabaseResponse.status !== 200) return supabaseResponse
+    // const { supabaseResponse, supabase } = await updateSession(request)
+    // if (supabaseResponse.status !== 200) return supabaseResponse
 }
 
 export const config = {
