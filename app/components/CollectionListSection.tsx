@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
 import { CollectionCard } from './CollectionCard'
 import { CreateCollectionModal } from './CreateCollectionModal'
+import { EditCollectionModal } from './EditCollectionModal'
 import { MemoryBookModal } from './MemoryBookModal'
 import { deleteCollection } from '../actions/collection'
 
@@ -12,11 +13,104 @@ interface CollectionListSectionProps {
   initialCollections: CollectionWithItems[]
 }
 
+const fallbackCollections: CollectionWithItems[] = [
+  {
+    id: 'sample-1',
+    name: 'Valentine Trip in Lapland',
+    description: 'Beautiful romantic trip memories amidst northern lights and snow.',
+    poster_url: '/zng_bg.png',
+    start_time: '2026-02-14',
+    end_time: '2026-02-20',
+    created_at: new Date().toISOString(),
+    collection_items: [
+      {
+        id: 'item-1',
+        collection_id: 'sample-1',
+        name: 'Northern Lights Evening',
+        description: 'Watching magical green aurora lights together in the quiet night sky.',
+        image_url: '/zng_bg.png',
+        memory_date: '2026-02-14',
+        order: 1,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'item-2',
+        collection_id: 'sample-1',
+        name: 'Cosy Fireside Hot Chocolate',
+        description: 'Warm moments inside a wooden cabin listening to snowfall.',
+        image_url: null,
+        memory_date: '2026-02-15',
+        order: 2,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'item-3',
+        collection_id: 'sample-1',
+        name: 'Reindeer Sleigh Ride',
+        description: 'Gliding peacefully through snowy pine forests together.',
+        image_url: '/zng_bg.png',
+        memory_date: '2026-02-16',
+        order: 3,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  },
+  {
+    id: 'sample-2',
+    name: 'Anniversary Dinner Date',
+    description: 'Candlelight dinner at a cosy bistro celebrating our love journey.',
+    poster_url: null,
+    start_time: '2025-10-10',
+    end_time: '2025-10-10',
+    created_at: new Date().toISOString(),
+    collection_items: [
+      {
+        id: 'item-21',
+        collection_id: 'sample-2',
+        name: 'Candlelight Toast',
+        description: 'Cheers to another wonderful year filled with love and laughter.',
+        image_url: null,
+        memory_date: '2025-10-10',
+        order: 1,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  },
+  {
+    id: 'sample-3',
+    name: 'Spring Blossom Walk',
+    description: 'Walking hand in hand through blooming cherry blossom parks.',
+    poster_url: '/zng_bg.png',
+    start_time: '2025-04-20',
+    end_time: '2025-04-25',
+    created_at: new Date().toISOString(),
+    collection_items: [],
+  },
+  {
+    id: 'sample-4',
+    name: 'Sunset Beach Picnic',
+    description: 'Golden hour waves, ocean breeze, and sweet conversation.',
+    poster_url: null,
+    start_time: '2025-07-08',
+    end_time: '2025-07-08',
+    created_at: new Date().toISOString(),
+    collection_items: [],
+  },
+]
+
 export function CollectionListSection({ initialCollections }: CollectionListSectionProps) {
-  const [collections, setCollections] = useState<CollectionWithItems[]>(initialCollections)
+  const [collections, setCollections] = useState<CollectionWithItems[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [activeViewCollection, setActiveViewCollection] = useState<CollectionWithItems | null>(null)
+  const [activeEditCollection, setActiveEditCollection] = useState<CollectionWithItems | null>(null)
 
+  useEffect(() => {
+    if (initialCollections && initialCollections.length > 0) {
+      setCollections(initialCollections)
+    } else {
+      setCollections(fallbackCollections)
+    }
+  }, [initialCollections])
 
   const handleDeleteCollection = async (collectionId: string) => {
     if (confirm('Are you sure you want to delete this collection?')) {
@@ -41,7 +135,12 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
   const handleCollectionCreated = (newCollection: CollectionWithItems) => {
     setCollections((prev) => [newCollection, ...prev])
   }
-  console.log(collections)
+
+  const handleCollectionEdited = (updatedCollection: CollectionWithItems) => {
+    setCollections((prev) =>
+      prev.map((col) => (col.id === updatedCollection.id ? { ...col, ...updatedCollection } : col))
+    )
+  }
 
   return (
     <section id="collections" className="w-full py-16 md:py-24 bg-[#fcfbfe] text-[#1f0c33] relative z-20">
@@ -79,6 +178,7 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
                 <CollectionCard
                   collection={collection}
                   onView={(col) => setActiveViewCollection(col)}
+                  onEdit={(col) => setActiveEditCollection(col)}
                   onDelete={handleDeleteCollection}
                 />
               </div>
@@ -105,18 +205,29 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
         )}
       </div>
 
+      {/* Create Collection Modal */}
       <CreateCollectionModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={handleCollectionCreated}
       />
 
-      <MemoryBookModal
+      {/* Edit Collection Modal */}
+      {activeEditCollection &&
+        <EditCollectionModal
+          isOpen={!!activeEditCollection}
+          onClose={() => setActiveEditCollection(null)}
+          collection={activeEditCollection}
+          onSuccess={handleCollectionEdited}
+        />}
+
+      {/* Memory Book FlipBook Modal */}
+      {activeViewCollection && <MemoryBookModal
         collection={activeViewCollection}
         isOpen={!!activeViewCollection}
         onClose={() => setActiveViewCollection(null)}
         onUpdateCollectionItems={handleUpdateCollectionItems}
-      />
+      />}
     </section>
   )
 }

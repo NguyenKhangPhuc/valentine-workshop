@@ -14,7 +14,7 @@ import { deleteCollectionItem, updateCollectionItem } from '../actions/collectio
 const HTMLFlipBook = dynamic(() => import('react-pageflip'), { ssr: false }) as any
 
 interface MemoryBookModalProps {
-  collection: CollectionWithItems | null
+  collection: CollectionWithItems
   isOpen: boolean
   onClose: () => void
   onUpdateCollectionItems?: (updatedItems: CollectionItem[]) => void
@@ -72,6 +72,7 @@ function ItemPageContent({
   onDeleteItem: (itemId: string) => void
   onImageChanged: (itemId: string, newImageUrl: string | null) => void
 }) {
+  console.log(item)
   const serverResolvedUrl = useMemo(() => {
     return resolveImageUrl(item.image_url)
   }, [item.image_url])
@@ -303,8 +304,8 @@ function ItemPageContent({
           <label
             ref={dropzoneRef}
             className={`w-full h-40 sm:h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${isDragging
-                ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]'
-                : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
+              ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]'
+              : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
               }`}
           >
             <input
@@ -349,8 +350,8 @@ export function MemoryBookModal({
 }: MemoryBookModalProps) {
   const flipBookRef = useRef<any>(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const [items, setItems] = useState<CollectionItem[]>([])
-
+  const [items, setItems] = useState<CollectionItem[]>(collection.collection_items ?? [])
+  console.log(collection, items)
   // Page number input state
   const [pageInput, setPageInput] = useState('1')
 
@@ -358,22 +359,11 @@ export function MemoryBookModal({
   const [isItemFormOpen, setIsItemFormOpen] = useState(false)
   const [itemToEdit, setItemToEdit] = useState<CollectionItem | null>(null)
 
-  useEffect(() => {
-    if (collection?.collection_items) {
-      setItems(collection.collection_items)
-    } else {
-      setItems([])
-    }
-  }, [collection])
 
   const maxPages = useMemo(() => {
     // 1 Front Cover + items count + 1 Back Cover
     return Math.max(1, items.length + 2)
   }, [items])
-
-  useEffect(() => {
-    setPageInput((currentPage + 1).toString())
-  }, [currentPage])
 
   const posterUrl = useMemo(() => {
     return resolveImageUrl(collection?.poster_url || null)
@@ -663,13 +653,13 @@ export function MemoryBookModal({
       </div>
 
       {/* Memory Item Form Modal (Create & Edit) */}
-      <MemoryItemFormModal
+      {itemToEdit && <MemoryItemFormModal
         isOpen={isItemFormOpen}
         onClose={() => setIsItemFormOpen(false)}
         collectionId={collection.id}
         itemToEdit={itemToEdit}
         onSuccess={handleItemFormSuccess}
-      />
+      />}
     </AnimatePresence>
   )
 }

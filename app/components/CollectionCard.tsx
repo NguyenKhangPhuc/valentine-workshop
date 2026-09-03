@@ -9,15 +9,22 @@ import { createClient } from '../utils/supabase/client'
 interface CollectionCardProps {
   collection: CollectionWithItems
   onView?: (collection: CollectionWithItems) => void
+  onEdit?: (collection: CollectionWithItems) => void
   onDelete?: (collectionId: string) => void
 }
 
-export function CollectionCard({ collection, onView, onDelete }: CollectionCardProps) {
+export function CollectionCard({ collection, onView, onEdit, onDelete }: CollectionCardProps) {
   const imageUrl = useMemo(() => {
     if (!collection.poster_url) {
       return '/zng_bg.png'
     }
-    if (collection.poster_url.startsWith('http://') || collection.poster_url.startsWith('https://')) {
+    if (
+      collection.poster_url.startsWith('/') ||
+      collection.poster_url.startsWith('http://') ||
+      collection.poster_url.startsWith('https://') ||
+      collection.poster_url.startsWith('data:') ||
+      collection.poster_url.startsWith('blob:')
+    ) {
       return collection.poster_url
     }
     try {
@@ -112,7 +119,8 @@ export function CollectionCard({ collection, onView, onDelete }: CollectionCardP
 
           <button
             type="button"
-            className="py-1.5 px-2 bg-[#fcfbfe] hover:bg-[#f4e6fc] border border-[#e9dcf5] text-[#5c4775] text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            onClick={() => onEdit?.(collection)}
+            className="py-1.5 px-2 bg-[#fcfbfe] hover:bg-[#f4e6fc] border border-[#e9dcf5] text-[#5c4775] hover:text-[#b63add] text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
           >
             Edit
           </button>
