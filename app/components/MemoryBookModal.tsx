@@ -7,7 +7,8 @@ import { CollectionWithItems } from '../types/collection'
 import { CollectionItem } from '../types/collection_item'
 import { handleGetUrl } from '../helpers/file_url'
 import { createClient } from '../utils/supabase/client'
-import { MemoryItemFormModal } from './MemoryItemFormModal'
+import { CreateMemoryItemModal } from './CreateMemoryItemModal'
+import { EditMemoryItemModal } from './EditMemoryItemModal'
 import { deleteCollectionItem, updateCollectionItem, updateCollectionItemPoster } from '../actions/collection_items'
 
 // Dynamically import HTMLFlipBook to disable SSR
@@ -75,7 +76,7 @@ function ItemPageContent({
   const serverResolvedUrl = useMemo(() => {
     return resolveImageUrl(item.image_url)
   }, [item.image_url])
-
+  console.log(item)
   const [localImageUrl, setLocalImageUrl] = useState<string | null>(serverResolvedUrl)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -83,7 +84,9 @@ function ItemPageContent({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
 
-
+  useEffect(() => {
+    setLocalImageUrl(serverResolvedUrl)
+  }, [serverResolvedUrl])
 
 
   // Native Capture-Phase Event Listeners attached directly to imageContainerRef
@@ -219,132 +222,79 @@ function ItemPageContent({
   const memoryDate = formatDate(item.memory_date)
 
   return (
-    <div className="h-full flex flex-col justify-between">
-      {/* Header with Date & Action Buttons */}
-      <div>
-        <div className="flex items-center justify-between border-b border-[#e9dcf5] pb-2 mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#b63add]">
-            Memory Item
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onEditItem(item)
-              }}
-              className="px-2.5 py-1 bg-[#b63add]/10 hover:bg-[#b63add] text-[#b63add] hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDeleteItem(item.id)
-              }}
-              className="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-            >
-              Delete
-            </button>
-          </div>
+    <div className="h-full flex flex-col gap-2">
+      {/* Toolbar: Edit & Delete buttons */}
+      <div className="flex items-center justify-between border-b border-[#e9dcf5] pb-2 flex-shrink-0">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#b63add]">
+          Memory Item
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onEditItem(item) }}
+            className="px-2.5 py-1 bg-[#b63add]/10 hover:bg-[#b63add] text-[#b63add] hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDeleteItem(item.id) }}
+            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+          >
+            Delete
+          </button>
         </div>
-
-        <div className="flex items-center justify-between mb-1">
-          <h4 className="text-lg font-bold text-[#1f0c33] line-clamp-2">
-            {item.name || 'Untitled Memory'}
-          </h4>
-        </div>
-        {memoryDate && (
-          <span className="text-xs font-medium text-[#624d78] block mb-2">
-            Date: {memoryDate}
-          </span>
-        )}
       </div>
 
-      {/* Isolated Image Preview or Interactive Drag & Drop Dropzone Container */}
+      {/* Image — first, right under toolbar */}
       <div
         ref={imageContainerRef}
-        className="my-2 flex-1 flex items-center justify-center min-h-[150px]"
+        className="w-full h-56 flex-shrink-0"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
       >
         {localImageUrl ? (
-          <div className="relative group w-full h-40 sm:h-48 rounded-xl overflow-hidden border border-[#e9dcf5] shadow-sm">
-            <img
-              src={localImageUrl}
-              alt={item.name || 'Memory Image'}
-              className="w-full h-full object-cover"
-            />
-            {/* Change / Remove Image Hover Overlay */}
+          <div className="relative group w-full h-full rounded-xl overflow-hidden border border-[#e9dcf5] shadow-sm">
+            <img src={localImageUrl} alt={item.name || 'Memory Image'} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="px-3 py-1.5 bg-white text-rose-600 font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-rose-50 transition-colors"
-              >
-                Remove
-              </button>
-              <label
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-[#b63add] text-white font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-[#9c28bd] transition-colors"
-              >
+              <button type="button" onClick={handleRemoveImage} className="px-3 py-1.5 bg-white text-rose-600 font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-rose-50 transition-colors">Remove</button>
+              <label onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 bg-[#b63add] text-white font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-[#9c28bd] transition-colors">
                 Change Image
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  onChange={(e) => {
-                    const files = e.target.files
-                    if (files && files.length > 0) {
-                      handleFileChange(files[0])
-                    }
-                  }} onClick={(e) => e.stopPropagation()}
-                  className="hidden"
-                />
+                <input type="file" accept="image/png, image/jpeg, image/webp" onChange={(e) => { const files = e.target.files; if (files && files.length > 0) handleFileChange(files[0]) }} onClick={(e) => e.stopPropagation()} className="hidden" />
               </label>
             </div>
           </div>
         ) : (
-          <label
-            className={`w-full h-40 sm:h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${isDragging
-              ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]'
-              : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
-              }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png, image/jpeg, image/webp"
-              onChange={(e) => {
-                const files = e.target.files
-                if (files && files.length > 0) {
-                  handleFileChange(files[0])
-                }
-              }} onClick={(e) => e.stopPropagation()}
-              className="hidden"
-            />
-            <div className="w-9 h-9 rounded-full bg-[#f4e6fc] text-[#b63add] flex items-center justify-center text-lg font-bold mb-1.5">
-              +
-            </div>
-            <p className="text-xs font-semibold text-[#b63add]">
-              Drop your image here
-            </p>
-            <p className="text-[10px] text-[#9681ab] mt-0.5">
-              Supports PNG, JPG, WEBP
-            </p>
+          <label className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${isDragging ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]' : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
+            }`}>
+            <input ref={fileInputRef} type="file" accept="image/png, image/jpeg, image/webp" onChange={(e) => { const files = e.target.files; if (files && files.length > 0) handleFileChange(files[0]) }} onClick={(e) => e.stopPropagation()} className="hidden" />
+            <div className="w-9 h-9 rounded-full bg-[#f4e6fc] text-[#b63add] flex items-center justify-center text-lg font-bold mb-1.5">+</div>
+            <p className="text-xs font-semibold text-[#b63add]">Drop your image here</p>
+            <p className="text-[10px] text-[#9681ab] mt-0.5">Supports PNG, JPG, WEBP</p>
           </label>
         )}
       </div>
 
-      {/* Description & Page Number */}
-      <div className="border-t border-[#f0e6fa] pt-2.5 mt-auto flex items-end justify-between">
-        <p className="text-xs text-[#624d78] leading-relaxed line-clamp-2 max-w-[85%]">
+      {/* Title & Description — centered */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-1 min-h-0">
+        <h4 className="text-base font-bold text-[#1f0c33] line-clamp-2 leading-tight mb-1">
+          {item.name || 'Untitled Memory'}
+        </h4>
+        {memoryDate && (
+          <span className="text-[10px] font-medium text-[#b63add] mb-1">Date: {memoryDate}</span>
+        )}
+        <p className="text-[11px] text-[#624d78] leading-relaxed line-clamp-2">
           {item.description || 'No notes added for this memory moment yet.'}
         </p>
-        <span className="text-[10px] font-medium text-[#9681ab]">
-          {pageNum}
+      </div>
+
+      {/* Footer: order + page number */}
+      <div className="border-t border-[#f0e6fa] pt-2 flex items-center justify-between flex-shrink-0">
+        <span className="text-[10px] font-semibold text-[#b63add] bg-[#f4e6fc] px-2 py-0.5 rounded-full">
+          {item.order != null ? `Order: #${item.order}` : 'No order'}
         </span>
+        <span className="text-[10px] font-medium text-[#9681ab]">{pageNum}</span>
       </div>
     </div>
   )
@@ -363,8 +313,8 @@ export function MemoryBookModal({
   // Page number input state
   const [pageInput, setPageInput] = useState('1')
 
-  // Item form modal state
-  const [isItemFormOpen, setIsItemFormOpen] = useState(false)
+  // Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [itemToEdit, setItemToEdit] = useState<CollectionItem | null>(null)
 
 
@@ -424,13 +374,11 @@ export function MemoryBookModal({
   }
 
   const handleCreateMemoryClick = () => {
-    setItemToEdit(null)
-    setIsItemFormOpen(true)
+    setIsCreateModalOpen(true)
   }
 
   const handleEditItemClick = (item: CollectionItem) => {
     setItemToEdit(item)
-    setIsItemFormOpen(true)
   }
 
   const handleDeleteItemClick = async (itemId: string) => {
@@ -451,19 +399,20 @@ export function MemoryBookModal({
     onUpdateCollectionItems?.(updated)
   }
 
-  const handleItemFormSuccess = (savedItem: CollectionItem, isEdit: boolean) => {
-    let updated: CollectionItem[]
-    if (isEdit) {
-      updated = items.map((it) => (it.id === savedItem.id ? savedItem : it))
-    } else {
-      updated = [...items, savedItem]
-    }
+  const handleCreateSuccess = (newItem: CollectionItem) => {
+    const updated = [...items, newItem]
+    setItems(updated)
+    onUpdateCollectionItems?.(updated)
+  }
+
+  const handleEditSuccess = (savedItem: CollectionItem) => {
+    const updated = items.map((it) => (it.id === savedItem.id ? savedItem : it))
     setItems(updated)
     onUpdateCollectionItems?.(updated)
   }
 
   return (
-    <AnimatePresence>
+    <>
       <div key="memory-book-modal-wrapper" className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 overflow-hidden">
         {/* Dimmed Background Backdrop */}
         <motion.div
@@ -518,13 +467,13 @@ export function MemoryBookModal({
           <div className="relative shadow-2xl rounded-2xl overflow-hidden p-2 sm:p-4 bg-gradient-to-r from-[#b63add]/30 via-transparent to-[#b63add]/30 max-w-full">
             <HTMLFlipBook
               ref={flipBookRef}
-              width={360}
-              height={500}
+              width={450}
+              height={600}
               size="fixed"
-              minWidth={280}
-              maxWidth={420}
-              minHeight={400}
-              maxHeight={550}
+              minWidth={320}
+              maxWidth={500}
+              minHeight={500}
+              maxHeight={650}
               maxShadowOpacity={0.5}
               showCover={true}
               usePortrait={false}
@@ -668,16 +617,24 @@ export function MemoryBookModal({
         </motion.div>
       </div>
 
-      {/* Memory Item Form Modal (Create & Edit) */}
+      {/* Create Memory Item Modal */}
+      <CreateMemoryItemModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        collectionId={collection.id}
+        onSuccess={handleCreateSuccess}
+      />
+
+      {/* Edit Memory Item Modal */}
       {itemToEdit && (
-        <MemoryItemFormModal
-          isOpen={isItemFormOpen}
-          onClose={() => setIsItemFormOpen(false)}
+        <EditMemoryItemModal
           collectionId={collection.id}
+          isOpen={!!itemToEdit}
+          onClose={() => setItemToEdit(null)}
           itemToEdit={itemToEdit}
-          onSuccess={handleItemFormSuccess}
+          onSuccess={handleEditSuccess}
         />
       )}
-    </AnimatePresence>
+    </>
   )
 }

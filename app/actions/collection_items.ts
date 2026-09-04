@@ -51,7 +51,7 @@ export const updateCollectionItemPoster = async (collectionItem: CollectionItem,
         if (error) {
             return { data: null, error: "Failed to update image" }
         }
-        return { data, error: null }
+        return { data: posterPath, error: null }
     }
 
     if (collectionItem.image_url != null && !collectionItem.image_url.startsWith('/')) {
@@ -61,5 +61,5 @@ export const updateCollectionItemPoster = async (collectionItem: CollectionItem,
     if (error) {
         return { data: null, error: "Failed to clear image" }
     }
-    return { data, error: null }
+    return { data: null, error: null }
 }

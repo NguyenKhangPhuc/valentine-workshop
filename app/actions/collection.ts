@@ -5,7 +5,10 @@ import { createClient } from "../utils/supabase/server"
 
 export const getAllCollectionsWithCollectionItems = async () => {
     const supabase = await createClient()
-    const { data, error } = await supabase.from('collections').select('*, collection_items (*)')
+    const { data, error } = await supabase
+        .from('collections')
+        .select('*, collection_items (*)')
+        .order('order', { foreignTable: 'collection_items', ascending: true });
     if (error) {
         console.log(error)
         return { data, error: "Failed to find all collections" }
