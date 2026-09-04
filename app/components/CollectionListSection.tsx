@@ -99,18 +99,10 @@ const fallbackCollections: CollectionWithItems[] = [
 ]
 
 export function CollectionListSection({ initialCollections }: CollectionListSectionProps) {
-  const [collections, setCollections] = useState<CollectionWithItems[]>([])
+  const [collections, setCollections] = useState<CollectionWithItems[]>(initialCollections)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [activeViewCollection, setActiveViewCollection] = useState<CollectionWithItems | null>(null)
   const [activeEditCollection, setActiveEditCollection] = useState<CollectionWithItems | null>(null)
-
-  useEffect(() => {
-    if (initialCollections && initialCollections.length > 0) {
-      setCollections(initialCollections)
-    } else {
-      setCollections(fallbackCollections)
-    }
-  }, [initialCollections])
 
   const handleDeleteCollection = async (collectionId: string) => {
     if (confirm('Are you sure you want to delete this collection?')) {

@@ -12,8 +12,6 @@ export default async function Home() {
   }
 
   // Cast data safely to CollectionWithItems array
-  const collections: CollectionWithItems[] = (data as CollectionWithItems[]) || [];
-
   return (
     <main className="min-h-screen bg-white text-[#1f0c33] flex flex-col font-sans selection:bg-[#b63add] selection:text-white">
       {/* Fixed Centered Navigation Bar */}
@@ -23,7 +21,7 @@ export default async function Home() {
       <HeroSection />
 
       {/* Collections Section (4 cols per row, Create Modal, View/Edit/Delete actions) */}
-      <CollectionListSection initialCollections={collections} />
+      <CollectionListSection initialCollections={data ?? []} />
     </main>
   );
 }

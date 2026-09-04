@@ -8,7 +8,7 @@ import { CollectionItem } from '../types/collection_item'
 import { handleGetUrl } from '../helpers/file_url'
 import { createClient } from '../utils/supabase/client'
 import { MemoryItemFormModal } from './MemoryItemFormModal'
-import { deleteCollectionItem, updateCollectionItem } from '../actions/collection_items'
+import { deleteCollectionItem, updateCollectionItem, updateCollectionItemPoster } from '../actions/collection_items'
 
 // Dynamically import HTMLFlipBook to disable SSR
 const HTMLFlipBook = dynamic(() => import('react-pageflip'), { ssr: false }) as any
@@ -72,7 +72,6 @@ function ItemPageContent({
   onDeleteItem: (itemId: string) => void
   onImageChanged: (itemId: string, newImageUrl: string | null) => void
 }) {
-  console.log(item)
   const serverResolvedUrl = useMemo(() => {
     return resolveImageUrl(item.image_url)
   }, [item.image_url])
@@ -80,40 +79,16 @@ function ItemPageContent({
   const [localImageUrl, setLocalImageUrl] = useState<string | null>(serverResolvedUrl)
   const [isDragging, setIsDragging] = useState(false)
 
-  const dropzoneRef = useRef<HTMLLabelElement>(null)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+
+
+
+
+  // Native Capture-Phase Event Listeners attached directly to imageContainerRef
   useEffect(() => {
-    setLocalImageUrl(serverResolvedUrl)
-  }, [serverResolvedUrl])
-
-  const processFile = (file: File) => {
-    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-    if (!validTypes.includes(file.type.toLowerCase())) {
-      alert('Only PNG, JPG, and WEBP image formats are supported.')
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string
-      if (dataUrl) {
-        setLocalImageUrl(dataUrl)
-        onImageChanged(item.id, dataUrl)
-
-        // Asynchronously update server item
-        updateCollectionItem({
-          id: item.id,
-          image_url: dataUrl,
-        }).catch((err) => console.error('Failed to save image:', err))
-      }
-    }
-    reader.readAsDataURL(file)
-  }
-
-  // Native Capture-Phase Event Listeners
-  useEffect(() => {
-    const el = dropzoneRef.current
+    const el = imageContainerRef.current
     if (!el) return
 
     const stopNativeMouse = (e: Event) => {
@@ -153,7 +128,7 @@ function ItemPageContent({
       setIsDragging(false)
 
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        processFile(e.dataTransfer.files[0])
+        handleFileChange(e.dataTransfer.files[0])
       }
     }
 
@@ -163,6 +138,7 @@ function ItemPageContent({
     el.addEventListener('pointerup', stopNativeMouse, true)
     el.addEventListener('touchstart', stopNativeMouse, true)
     el.addEventListener('touchend', stopNativeMouse, true)
+    el.addEventListener('click', stopNativeMouse, true)
 
     el.addEventListener('dragenter', handleNativeDragOver, true)
     el.addEventListener('dragover', handleNativeDragOver, true)
@@ -176,31 +152,55 @@ function ItemPageContent({
       el.removeEventListener('pointerup', stopNativeMouse, true)
       el.removeEventListener('touchstart', stopNativeMouse, true)
       el.removeEventListener('touchend', stopNativeMouse, true)
+      el.removeEventListener('click', stopNativeMouse, true)
 
       el.removeEventListener('dragenter', handleNativeDragOver, true)
       el.removeEventListener('dragover', handleNativeDragOver, true)
       el.removeEventListener('dragleave', handleNativeDragLeave, true)
       el.removeEventListener('drop', handleNativeDrop, true)
     }
-  }, [item.id])
+  }, [localImageUrl, item.id])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation()
-    const files = e.target.files
-    if (files && files.length > 0) {
-      processFile(files[0])
+  const handleFileChange = async (file: File): Promise<void> => {
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    setLocalImageUrl(url)
+
+    try {
+      const { error } = await updateCollectionItemPoster(item, file)
+      if (error) {
+        throw new Error(error)
+      }
+      const updatedPayload = {
+        ...item, poster_url: url
+      }
+      onImageChanged(updatedPayload.id, url)
+      // showNotification("Update image successfully")
+    } catch (error) {
+      if (error instanceof Error) {
+        // showNotification(error.message)
+      } else {
+        // showNotification("Failed to update poster image.")
+      }
+    } finally {
+      // setIsOpenLoader(false)
     }
   }
 
   const handleRemoveImage = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setLocalImageUrl(null)
-    onImageChanged(item.id, null)
-    updateCollectionItem({
-      id: item.id,
-      image_url: null,
-    }).catch((err) => console.error('Failed to clear image:', err))
+
+    try {
+      updateCollectionItem({
+        id: item.id,
+        image_url: null,
+      })
+      setLocalImageUrl(null)
+      onImageChanged(item.id, null)
+    } catch (error) {
+      console.log("Failed to update the image")
+    }
   }
 
   const formatDate = (dateStr: string | null) => {
@@ -262,8 +262,9 @@ function ItemPageContent({
         )}
       </div>
 
-      {/* Isolated Image Preview or Interactive Drag & Drop Dropzone */}
+      {/* Isolated Image Preview or Interactive Drag & Drop Dropzone Container */}
       <div
+        ref={imageContainerRef}
         className="my-2 flex-1 flex items-center justify-center min-h-[150px]"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
@@ -293,8 +294,12 @@ function ItemPageContent({
                 <input
                   type="file"
                   accept="image/png, image/jpeg, image/webp"
-                  onChange={handleFileChange}
-                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    const files = e.target.files
+                    if (files && files.length > 0) {
+                      handleFileChange(files[0])
+                    }
+                  }} onClick={(e) => e.stopPropagation()}
                   className="hidden"
                 />
               </label>
@@ -302,7 +307,6 @@ function ItemPageContent({
           </div>
         ) : (
           <label
-            ref={dropzoneRef}
             className={`w-full h-40 sm:h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${isDragging
               ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]'
               : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
@@ -312,8 +316,12 @@ function ItemPageContent({
               ref={fileInputRef}
               type="file"
               accept="image/png, image/jpeg, image/webp"
-              onChange={handleFileChange}
-              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                const files = e.target.files
+                if (files && files.length > 0) {
+                  handleFileChange(files[0])
+                }
+              }} onClick={(e) => e.stopPropagation()}
               className="hidden"
             />
             <div className="w-9 h-9 rounded-full bg-[#f4e6fc] text-[#b63add] flex items-center justify-center text-lg font-bold mb-1.5">
@@ -350,8 +358,8 @@ export function MemoryBookModal({
 }: MemoryBookModalProps) {
   const flipBookRef = useRef<any>(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const [items, setItems] = useState<CollectionItem[]>(collection.collection_items ?? [])
-  console.log(collection, items)
+  const [items, setItems] = useState<CollectionItem[]>(collection?.collection_items ?? [])
+
   // Page number input state
   const [pageInput, setPageInput] = useState('1')
 
@@ -360,10 +368,12 @@ export function MemoryBookModal({
   const [itemToEdit, setItemToEdit] = useState<CollectionItem | null>(null)
 
 
+
   const maxPages = useMemo(() => {
     // 1 Front Cover + items count + 1 Back Cover
     return Math.max(1, items.length + 2)
   }, [items])
+
 
   const posterUrl = useMemo(() => {
     return resolveImageUrl(collection?.poster_url || null)
@@ -385,6 +395,8 @@ export function MemoryBookModal({
 
   const onPageFlip = (e: any) => {
     setCurrentPage(e.data)
+    setPageInput((e.data + 1).toString())
+
   }
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -516,7 +528,11 @@ export function MemoryBookModal({
               maxShadowOpacity={0.5}
               showCover={true}
               usePortrait={false}
-              mobileScrollSupport={true}
+              mobileScrollSupport={false}
+              useMouseEvents={false}
+              clickEventForward={false}
+              showPageCorners={false}
+              swipeDistance={0}
               onFlip={onPageFlip}
               className="mx-auto rounded-lg"
             >
@@ -549,7 +565,7 @@ export function MemoryBookModal({
 
                   <div className="w-full border-t border-white/20 pt-3">
                     <span className="text-[11px] font-semibold text-white/90">
-                      Open to Explore
+                      Use Navigation Controls Below To Flip
                     </span>
                   </div>
                 </div>
@@ -653,13 +669,15 @@ export function MemoryBookModal({
       </div>
 
       {/* Memory Item Form Modal (Create & Edit) */}
-      {itemToEdit && <MemoryItemFormModal
-        isOpen={isItemFormOpen}
-        onClose={() => setIsItemFormOpen(false)}
-        collectionId={collection.id}
-        itemToEdit={itemToEdit}
-        onSuccess={handleItemFormSuccess}
-      />}
+      {itemToEdit && (
+        <MemoryItemFormModal
+          isOpen={isItemFormOpen}
+          onClose={() => setIsItemFormOpen(false)}
+          collectionId={collection.id}
+          itemToEdit={itemToEdit}
+          onSuccess={handleItemFormSuccess}
+        />
+      )}
     </AnimatePresence>
   )
 }

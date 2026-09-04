@@ -64,24 +64,12 @@ export function EditCollectionModal({
     formState: { errors, isSubmitting },
   } = useForm<FormInputs>({
     defaultValues: {
-      name: '',
-      description: '',
-      start_time: '',
-      end_time: '',
+      name: collection.name ?? "",
+      description: collection.description ?? "",
+      start_time: collection.start_time ?? "",
+      end_time: collection.end_time ?? "",
     },
   })
-
-  useEffect(() => {
-    if (collection) {
-      setValue('name', collection.name || '')
-      setValue('description', collection.description || '')
-      setValue('start_time', collection.start_time ? collection.start_time.split('T')[0] : '')
-      setValue('end_time', collection.end_time ? collection.end_time.split('T')[0] : '')
-      setSelectedUrl(initialResolvedUrl)
-      setSelectedFile(null)
-    }
-  }, [collection, setValue, initialResolvedUrl, isOpen])
-
 
 
   // Native capture-phase listeners for drag and drop

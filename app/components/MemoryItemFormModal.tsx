@@ -68,29 +68,13 @@ export function MemoryItemFormModal({
     formState: { errors, isSubmitting },
   } = useForm<FormInputs>({
     defaultValues: {
-      name: '',
-      description: '',
-      memory_date: '',
+      name: itemToEdit.name ?? "",
+      description: itemToEdit.description ?? "",
+      memory_date: itemToEdit.memory_date ?? "",
     },
   })
 
-  useEffect(() => {
-    if (itemToEdit) {
-      setValue('name', itemToEdit.name || '')
-      setValue('description', itemToEdit.description || '')
-      setValue('memory_date', itemToEdit.memory_date ? itemToEdit.memory_date.split('T')[0] : '')
-      setSelectedUrl(initialResolvedUrl)
-      setSelectedFile(null)
-    } else {
-      reset({
-        name: '',
-        description: '',
-        memory_date: '',
-      })
-      setSelectedUrl(null)
-      setSelectedFile(null)
-    }
-  }, [itemToEdit, setValue, reset, initialResolvedUrl, isOpen])
+
 
 
   // Native capture-phase listeners for drag and drop
