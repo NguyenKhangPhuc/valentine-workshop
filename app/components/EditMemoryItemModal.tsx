@@ -164,7 +164,7 @@ export function EditMemoryItemModal({
         throw new Error(error)
       }
       const updatedPayload = {
-        ...itemToEdit, poster_url: url
+        ...itemToEdit, image_url: url
       }
       onSuccess(updatedPayload, true)
       // showNotification("Update image successfully")
@@ -181,14 +181,12 @@ export function EditMemoryItemModal({
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      let finalImageUrl = itemToEdit?.image_url || selectedUrl
-
       const payload = {
         id: itemToEdit.id,
         name: data.name,
         description: data.description,
         memory_date: data.memory_date || null,
-        image_url: finalImageUrl,
+        order: data.order
       }
       const res = await updateCollectionItem(payload)
       if (res.data) {
@@ -251,21 +249,28 @@ export function EditMemoryItemModal({
             )}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-[#5c4775] uppercase tracking-wider mb-1">
-              Memory Date
-            </label>
-            <input
-              type="date"
-              {...register('memory_date')}
-              className="w-full bg-[#fcfbfe] border border-[#e9dcf5] focus:border-[#b63add] focus:ring-1 focus:ring-[#b63add] rounded-xl px-3.5 py-2 text-sm text-[#1f0c33] outline-none transition-all"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#5c4775] uppercase tracking-wider mb-1">Memory Date</label>
+              <input
+                type="date"
+                {...register('memory_date')}
+                className="w-full bg-[#fcfbfe] border border-[#e9dcf5] focus:border-[#b63add] focus:ring-1 focus:ring-[#b63add] rounded-xl px-3.5 py-2 text-sm text-[#1f0c33] outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#5c4775] uppercase tracking-wider mb-1">Order</label>
+              <input
+                type="number"
+                min={1}
+                {...register('order', { valueAsNumber: true })}
+                className="w-full bg-[#fcfbfe] border border-[#e9dcf5] focus:border-[#b63add] focus:ring-1 focus:ring-[#b63add] rounded-xl px-3.5 py-2 text-sm text-[#1f0c33] outline-none transition-all"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#5c4775] uppercase tracking-wider mb-1">
-              Description / Notes
-            </label>
+            <label className="block text-xs font-semibold text-[#5c4775] uppercase tracking-wider mb-1">Description / Notes</label>
             <textarea
               rows={3}
               placeholder="Write details about this memory moment..."

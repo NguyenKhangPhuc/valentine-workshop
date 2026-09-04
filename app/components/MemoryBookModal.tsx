@@ -83,7 +83,6 @@ function ItemPageContent({
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-
   useEffect(() => {
     setLocalImageUrl(serverResolvedUrl)
   }, [serverResolvedUrl])
@@ -309,7 +308,7 @@ export function MemoryBookModal({
   const flipBookRef = useRef<any>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [items, setItems] = useState<CollectionItem[]>(collection?.collection_items ?? [])
-
+  const [bookFlipKey, setBookFlipKey] = useState(items.length)
   // Page number input state
   const [pageInput, setPageInput] = useState('1')
 
@@ -400,14 +399,19 @@ export function MemoryBookModal({
   }
 
   const handleCreateSuccess = (newItem: CollectionItem) => {
-    const updated = [...items, newItem]
+    const updated = [...items, newItem].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     setItems(updated)
     onUpdateCollectionItems?.(updated)
+    setBookFlipKey(bookFlipKey + 1)
+
   }
 
   const handleEditSuccess = (savedItem: CollectionItem) => {
-    const updated = items.map((it) => (it.id === savedItem.id ? savedItem : it))
+    const updated = items
+      .map((it) => (it.id === savedItem.id ? savedItem : it))
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     setItems(updated)
+    setBookFlipKey(bookFlipKey + 1)
     onUpdateCollectionItems?.(updated)
   }
 
@@ -466,6 +470,7 @@ export function MemoryBookModal({
           {/* FlipBook Container for 2-Page Spread */}
           <div className="relative shadow-2xl rounded-2xl overflow-hidden p-2 sm:p-4 bg-gradient-to-r from-[#b63add]/30 via-transparent to-[#b63add]/30 max-w-full">
             <HTMLFlipBook
+              key={bookFlipKey}
               ref={flipBookRef}
               width={450}
               height={600}
