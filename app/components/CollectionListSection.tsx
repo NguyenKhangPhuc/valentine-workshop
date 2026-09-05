@@ -164,7 +164,7 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
 
         {/* 4 Collections per row Grid Layout */}
         {collections.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-6">
             {collections.map((collection) => (
               <div key={collection.id}>
                 <CollectionCard

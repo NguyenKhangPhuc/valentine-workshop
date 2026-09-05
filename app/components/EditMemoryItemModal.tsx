@@ -144,9 +144,9 @@ export function EditMemoryItemModal({
       setSelectedUrl(null)
       setSelectedFile(null)
       const updatedPayload = {
-        ...itemToEdit, poster_url: null
+        ...itemToEdit, image_url: null
       }
-      onSuccess(updatedPayload, true)
+      onSuccess(updatedPayload, false)
     } catch (error) {
       console.log(error)
     }
@@ -290,7 +290,7 @@ export function EditMemoryItemModal({
                   <img
                     src={selectedUrl}
                     alt="Memory Image"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                   {/* Top-Right Delete Button */}
                   <button

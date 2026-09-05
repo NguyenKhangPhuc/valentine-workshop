@@ -162,7 +162,7 @@ export function CreateMemoryItemModal({
               <div className="relative w-full">
                 {selectedUrl ? (
                   <div className="relative group w-full h-56 rounded-xl overflow-hidden border border-[#e9dcf5] shadow-sm">
-                    <img src={selectedUrl} alt="Memory Image" className="w-full h-full object-cover" />
+                    <img src={selectedUrl} alt="Memory Image" className="w-full h-full object-contain" />
                     <button type="button" onClick={() => { setSelectedUrl(null); setSelectedFile(null) }} className="absolute top-2 right-2 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-lg shadow-md transition-colors cursor-pointer z-10">Delete</button>
                     <label className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                       <span className="px-4 py-2 bg-white text-[#b63add] font-semibold text-xs rounded-xl shadow">Change Image</span>

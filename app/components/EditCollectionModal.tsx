@@ -295,7 +295,7 @@ export function EditCollectionModal({
                     <img
                       src={selectedUrl}
                       alt="Collection Poster"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                     {/* Top-Right Delete Button */}
                     <button

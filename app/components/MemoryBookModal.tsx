@@ -254,8 +254,8 @@ function ItemPageContent({
         onPointerDown={(e) => e.stopPropagation()}
       >
         {localImageUrl ? (
-          <div className="relative group w-full h-full rounded-xl overflow-hidden border border-[#e9dcf5] shadow-sm">
-            <img src={localImageUrl} alt={item.name || 'Memory Image'} className="w-full h-full object-cover" />
+          <div className="relative group w-full h-full rounded-lg overflow-hidden">
+            <img src={localImageUrl} alt={item.name || 'Memory Image'} className="w-full h-full object-contain" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button type="button" onClick={handleRemoveImage} className="px-3 py-1.5 bg-white text-rose-600 font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-rose-50 transition-colors">Remove</button>
               <label onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 bg-[#b63add] text-white font-semibold text-xs rounded-lg shadow cursor-pointer hover:bg-[#9c28bd] transition-colors">
@@ -275,21 +275,21 @@ function ItemPageContent({
         )}
       </div>
 
-      {/* Title & Description — centered */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-1 min-h-0">
+      {/* Title & Description — horizontal center only */}
+      <div className="flex flex-col items-center text-center px-1">
         <h4 className="text-base font-bold text-[#1f0c33] line-clamp-2 leading-tight mb-1">
           {item.name || 'Untitled Memory'}
         </h4>
         {memoryDate && (
           <span className="text-[10px] font-medium text-[#b63add] mb-1">Date: {memoryDate}</span>
         )}
-        <p className="text-[11px] text-[#624d78] leading-relaxed line-clamp-2">
+        <p className="text-[11px] text-[#624d78] leading-relaxed ">
           {item.description || 'No notes added for this memory moment yet.'}
         </p>
       </div>
 
       {/* Footer: order + page number */}
-      <div className="border-t border-[#f0e6fa] pt-2 flex items-center justify-between flex-shrink-0">
+      <div className="border-t border-[#f0e6fa] pt-2 flex items-center justify-between flex-shrink-0 mt-auto">
         <span className="text-[10px] font-semibold text-[#b63add] bg-[#f4e6fc] px-2 py-0.5 rounded-full">
           {item.order != null ? `Order: #${item.order}` : 'No order'}
         </span>
@@ -406,12 +406,14 @@ export function MemoryBookModal({
 
   }
 
-  const handleEditSuccess = (savedItem: CollectionItem) => {
+  const handleEditSuccess = (savedItem: CollectionItem, isIncrease: boolean) => {
     const updated = items
       .map((it) => (it.id === savedItem.id ? savedItem : it))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     setItems(updated)
-    setBookFlipKey(bookFlipKey + 1)
+    if (isIncrease) {
+      setBookFlipKey(bookFlipKey + 1)
+    }
     onUpdateCollectionItems?.(updated)
   }
 
@@ -505,7 +507,7 @@ export function MemoryBookModal({
                         <img
                           src={posterUrl}
                           alt="Collection Cover"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       </div>
                     )}
