@@ -319,10 +319,10 @@ export function MemoryBookModal({
 
 
   const maxPages = useMemo(() => {
-    // 1 Front Cover + items count + 1 Back Cover
-    return Math.max(1, items.length + 2)
-  }, [items])
-
+    // 1 Front Cover + inner pages count (guaranteed even) + 1 Back Cover
+    const innerCount = items.length === 0 ? 2 : items.length % 2 !== 0 ? items.length + 1 : items.length
+    return 1 + innerCount + 1
+  }, [items.length])
 
   const posterUrl = useMemo(() => {
     return resolveImageUrl(collection?.poster_url || null)
@@ -345,7 +345,6 @@ export function MemoryBookModal({
   const onPageFlip = (e: any) => {
     setCurrentPage(e.data)
     setPageInput((e.data + 1).toString())
-
   }
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -388,6 +387,7 @@ export function MemoryBookModal({
       }
       const updated = items.filter((it) => it.id !== itemId)
       setItems(updated)
+      setBookFlipKey((prev) => prev + 1)
       onUpdateCollectionItems?.(updated)
     }
   }
@@ -416,6 +416,192 @@ export function MemoryBookModal({
     }
     onUpdateCollectionItems?.(updated)
   }
+
+  const bookPages = useMemo(() => {
+    const pages: React.ReactElement[] = []
+
+    // 1. Front Cover
+    pages.push(
+      <BookPage
+        key="page-front-cover"
+        className="!bg-gradient-to-br !from-[#b63add] !to-[#8b22b3] !text-white border-2 border-white/20"
+      >
+        <div className="h-full flex flex-col justify-between items-center text-center p-4">
+          <div className="w-full border-b border-white/20 pb-3">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-white/80">
+              Valentine Memory Book
+            </span>
+          </div>
+
+          <div className="my-auto flex flex-col items-center max-w-xs">
+            {posterUrl && (
+              <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg mb-4">
+                <img
+                  src={posterUrl}
+                  alt="Collection Cover"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <h2 className="text-2xl font-black text-white mb-2 leading-tight">
+              {collection.name || 'Untitled Collection'}
+            </h2>
+            <p className="text-xs text-white/80 line-clamp-3 leading-relaxed">
+              {collection.description || 'A cherished collection of romantic memories.'}
+            </p>
+          </div>
+
+          <div className="w-full border-t border-white/20 pt-3">
+            <span className="text-[11px] font-semibold text-white/90">
+              Use Navigation Controls Below To Flip
+            </span>
+          </div>
+        </div>
+      </BookPage>
+    )
+
+    // 2. Inner Pages
+    if (items.length > 0) {
+      items.forEach((item, idx) => {
+        pages.push(
+          <BookPage key={`item-page-${item.id && item.id.trim() !== '' ? item.id : 'idx-' + idx}`}>
+            <ItemPageContent
+              item={item}
+              pageNum={idx + 1}
+              onEditItem={handleEditItemClick}
+              onDeleteItem={handleDeleteItemClick}
+              onImageChanged={handleImageChanged}
+            />
+          </BookPage>
+        )
+      })
+
+      // Extra page when items count is odd to ensure even inner page count
+      if (items.length % 2 !== 0) {
+        pages.push(
+          <BookPage key="page-extra-filler" className="!bg-[#fcfbfe]">
+            <div className="h-full flex flex-col justify-between items-center text-center p-6 border border-dashed border-[#e9dcf5] rounded-xl bg-white/70">
+              <div className="w-full border-b border-[#e9dcf5] pb-2 flex items-center justify-between text-xs text-[#9681ab]">
+                <span className="font-mono text-[11px]">PAGE {items.length + 1}</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#b63add]">
+                  Next Chapter
+                </span>
+              </div>
+
+              <div className="my-auto flex flex-col items-center max-w-xs px-2">
+                <div className="w-14 h-14 rounded-2xl bg-[#faf0fe] border border-[#e9dcf5] flex items-center justify-center text-[#b63add] mb-4 shadow-xs">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                  </svg>
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-[#1f0c33] mb-2">
+                  To Be Continued...
+                </h4>
+                <p className="text-xs text-[#624d78] leading-relaxed mb-5">
+                  Every shared moment is a page in our story. More sweet memories are yet to come.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCreateMemoryClick}
+                  className="px-4 py-2 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white text-xs font-semibold shadow-md shadow-[#b63add]/25 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>+</span>
+                  <span>Add Another Memory</span>
+                </button>
+              </div>
+
+              <div className="w-full border-t border-[#e9dcf5] pt-2">
+                <span className="text-[10px] text-[#9681ab] italic">
+                  Turn the page to close the book
+                </span>
+              </div>
+            </div>
+          </BookPage>
+        )
+      }
+    } else {
+      // Empty collection: 2 companion pages
+      pages.push(
+        <BookPage key="page-empty-collection">
+          <div className="h-full flex flex-col items-center justify-center text-center p-6">
+            <h4 className="text-base font-bold text-[#1f0c33] mb-2">
+              Empty Collection
+            </h4>
+            <p className="text-xs text-[#624d78] mb-4">
+              No memory items added to this collection yet.
+            </p>
+            <button
+              type="button"
+              onClick={handleCreateMemoryClick}
+              className="px-4 py-2 rounded-xl bg-[#b63add] text-white text-xs font-semibold shadow cursor-pointer"
+            >
+              + Add First Memory
+            </button>
+          </div>
+        </BookPage>
+      )
+      pages.push(
+        <BookPage key="page-empty-companion" className="!bg-[#fcfbfe]">
+          <div className="h-full flex flex-col justify-between items-center text-center p-6 border border-dashed border-[#e9dcf5] rounded-xl bg-white/70">
+            <div className="w-full border-b border-[#e9dcf5] pb-2 flex items-center justify-between text-xs text-[#9681ab]">
+              <span className="font-mono text-[11px]">PAGE 2</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[#b63add]">
+                Our Beginning
+              </span>
+            </div>
+            <div className="my-auto flex flex-col items-center max-w-xs px-2">
+              <div className="w-14 h-14 rounded-2xl bg-[#faf0fe] border border-[#e9dcf5] flex items-center justify-center text-[#b63add] mb-4 shadow-xs">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <h4 className="text-base font-bold text-[#1f0c33] mb-2">
+                Write Your Love Story
+              </h4>
+              <p className="text-xs text-[#624d78] leading-relaxed">
+                Capture every precious date, anniversary, and unforgettable memory in this digital keepsake.
+              </p>
+            </div>
+            <div className="w-full border-t border-[#e9dcf5] pt-2">
+              <span className="text-[10px] text-[#9681ab] italic">
+                Turn the page to close the book
+              </span>
+            </div>
+          </div>
+        </BookPage>
+      )
+    }
+
+    // 3. Back Cover
+    pages.push(
+      <BookPage key="page-back-cover" className="!bg-[#1f0c33] !text-white border-2 border-[#b63add]/30">
+        <div className="h-full flex flex-col justify-between items-center text-center p-6">
+          <div className="w-full border-b border-white/10 pb-3">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-[#b63add]">
+              The End
+            </span>
+          </div>
+
+          <div className="my-auto">
+            <h3 className="text-xl font-bold text-white mb-2">
+              Memories To Be Continued
+            </h3>
+            <p className="text-xs text-[#f5dcfd]/90 font-medium tracking-wide">
+              The end of {collection.name || 'this collection'}
+            </p>
+          </div>
+
+          <div className="w-full border-t border-white/10 pt-3">
+            <span className="text-[10px] text-gray-400">
+              Created with love
+            </span>
+          </div>
+        </div>
+      </BookPage>
+    )
+
+    return pages
+  }, [items, posterUrl, collection.name, collection.description])
 
   return (
     <>
@@ -492,99 +678,7 @@ export function MemoryBookModal({
               onFlip={onPageFlip}
               className="mx-auto rounded-lg"
             >
-              {/* PAGE 1: Front Cover */}
-              <BookPage key="page-front-cover" className="!bg-gradient-to-br !from-[#b63add] !to-[#8b22b3] !text-white border-2 border-white/20">
-                <div className="h-full flex flex-col justify-between items-center text-center p-4">
-                  <div className="w-full border-b border-white/20 pb-3">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/80">
-                      Valentine Memory Book
-                    </span>
-                  </div>
-
-                  <div className="my-auto flex flex-col items-center max-w-xs">
-                    {posterUrl && (
-                      <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg mb-4">
-                        <img
-                          src={posterUrl}
-                          alt="Collection Cover"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    )}
-                    <h2 className="text-2xl font-black text-white mb-2 leading-tight">
-                      {collection.name || 'Untitled Collection'}
-                    </h2>
-                    <p className="text-xs text-white/80 line-clamp-3 leading-relaxed">
-                      {collection.description || 'A cherished collection of romantic memories.'}
-                    </p>
-                  </div>
-
-                  <div className="w-full border-t border-white/20 pt-3">
-                    <span className="text-[11px] font-semibold text-white/90">
-                      Use Navigation Controls Below To Flip
-                    </span>
-                  </div>
-                </div>
-              </BookPage>
-
-              {/* Inner Item Pages */}
-              {items.length > 0 ? (
-                items.map((item, idx) => (
-                  <BookPage key={`item-page-${item.id && item.id.trim() !== '' ? item.id : 'idx-' + idx}`}>
-                    <ItemPageContent
-                      item={item}
-                      pageNum={idx + 1}
-                      onEditItem={handleEditItemClick}
-                      onDeleteItem={handleDeleteItemClick}
-                      onImageChanged={handleImageChanged}
-                    />
-                  </BookPage>
-                ))
-              ) : (
-                <BookPage key="page-empty-collection">
-                  <div className="h-full flex flex-col items-center justify-center text-center p-6">
-                    <h4 className="text-base font-bold text-[#1f0c33] mb-2">
-                      Empty Collection
-                    </h4>
-                    <p className="text-xs text-[#624d78] mb-4">
-                      No memory items added to this collection yet.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleCreateMemoryClick}
-                      className="px-4 py-2 rounded-xl bg-[#b63add] text-white text-xs font-semibold shadow cursor-pointer"
-                    >
-                      + Add First Memory
-                    </button>
-                  </div>
-                </BookPage>
-              )}
-
-              {/* FINAL PAGE: Back Cover */}
-              <BookPage key="page-back-cover" className="!bg-[#1f0c33] !text-white border-2 border-[#b63add]/30">
-                <div className="h-full flex flex-col justify-between items-center text-center p-6">
-                  <div className="w-full border-b border-white/10 pb-3">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#b63add]">
-                      The End
-                    </span>
-                  </div>
-
-                  <div className="my-auto">
-                    <h3 className="text-xl font-bold text-[#1f0c33] mb-2">
-                      Memories To Be Continued
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      ValentineBook Memory Vault
-                    </p>
-                  </div>
-
-                  <div className="w-full border-t border-white/10 pt-3">
-                    <span className="text-[10px] text-gray-500">
-                      Created with love
-                    </span>
-                  </div>
-                </div>
-              </BookPage>
+              {bookPages}
             </HTMLFlipBook>
           </div>
 
