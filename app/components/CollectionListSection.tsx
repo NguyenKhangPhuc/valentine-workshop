@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
 import { CollectionCard } from './CollectionCard'
@@ -9,6 +9,7 @@ import { EditCollectionModal } from './EditCollectionModal'
 import { MemoryBookModal } from './MemoryBookModal'
 import { deleteCollection } from '../actions/collection'
 import Pagination from './Pagination'
+import { CollectionToolbar, SortOption } from './CollectionToolbar'
 
 interface CollectionListSectionProps {
   initialCollections: CollectionWithItems[]
@@ -104,22 +105,107 @@ const ITEMS_PER_PAGE = 6
 export function CollectionListSection({ initialCollections }: CollectionListSectionProps) {
   const [collections, setCollections] = useState<CollectionWithItems[]>(initialCollections)
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('created_at_desc')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [activeViewCollection, setActiveViewCollection] = useState<CollectionWithItems | null>(null)
   const [activeEditCollection, setActiveEditCollection] = useState<CollectionWithItems | null>(null)
 
-  const totalPages = Math.ceil(collections.length / ITEMS_PER_PAGE)
-  const paginatedCollections = collections.slice(
+  // Filter and sort collections based on user criteria
+  const filteredAndSortedCollections = useMemo(() => {
+    let result = [...collections]
+
+    // 1. Search filtering by title (name) or description
+    const query = searchQuery.trim().toLowerCase()
+    if (query) {
+      result = result.filter((col) => {
+        const nameMatch = col.name ? col.name.toLowerCase().includes(query) : false
+        const descMatch = col.description ? col.description.toLowerCase().includes(query) : false
+        return nameMatch || descMatch
+      })
+    }
+
+    // 2. Sorting criteria
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'created_at_asc': {
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
+          return timeA - timeB
+        }
+        case 'created_at_desc': {
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
+          return timeB - timeA
+        }
+        case 'name_asc': {
+          const nameA = a.name || ''
+          const nameB = b.name || ''
+          return nameA.localeCompare(nameB)
+        }
+        case 'name_desc': {
+          const nameA = a.name || ''
+          const nameB = b.name || ''
+          return nameB.localeCompare(nameA)
+        }
+        case 'items_desc': {
+          const countA = a.collection_items?.length || 0
+          const countB = b.collection_items?.length || 0
+          return countB - countA
+        }
+        case 'items_asc': {
+          const countA = a.collection_items?.length || 0
+          const countB = b.collection_items?.length || 0
+          return countA - countB
+        }
+        case 'start_date_asc': {
+          if (!a.start_time && !b.start_time) return 0
+          if (!a.start_time) return 1
+          if (!b.start_time) return -1
+          return new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        }
+        case 'start_date_desc': {
+          if (!a.start_time && !b.start_time) return 0
+          if (!a.start_time) return 1
+          if (!b.start_time) return -1
+          return new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+        }
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [collections, searchQuery, sortBy])
+
+  const totalPages = Math.ceil(filteredAndSortedCollections.length / ITEMS_PER_PAGE)
+  const paginatedCollections = filteredAndSortedCollections.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   )
 
-  // Clamp current page if items are deleted or collections shrink
+  // Clamp current page if items are filtered or deleted
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages)
     }
-  }, [collections.length, totalPages, currentPage])
+  }, [filteredAndSortedCollections.length, totalPages, currentPage])
+
+  const handleSearchChange = (q: string) => {
+    setSearchQuery(q)
+    setCurrentPage(1)
+  }
+
+  const handleSortChange = (sort: SortOption) => {
+    setSortBy(sort)
+    setCurrentPage(1)
+  }
+
+  const handleResetFilters = () => {
+    setSearchQuery('')
+    setSortBy('created_at_desc')
+    setCurrentPage(1)
+  }
 
   const handleDeleteCollection = async (collectionId: string) => {
     if (confirm('Are you sure you want to delete this collection?')) {
@@ -157,7 +243,7 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
       {/* Container - Not too tight/narrow padding */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 pb-6 border-b border-[#e9dcf5]">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b border-[#e9dcf5]">
           <div>
             <span className="text-[#b63add] text-xs font-bold uppercase tracking-widest block mb-1">
               Memory Albums
@@ -180,37 +266,86 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
           </motion.button>
         </div>
 
+        {/* Search & Sort Toolbar - Available when collections exist */}
+        {collections.length > 0 && (
+          <CollectionToolbar
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            sortBy={sortBy}
+            onSortChange={handleSortChange}
+            totalFiltered={filteredAndSortedCollections.length}
+            totalCount={collections.length}
+            onReset={handleResetFilters}
+          />
+        )}
+
         {/* Collections Grid Layout & Left-aligned Pagination */}
         {collections.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {paginatedCollections.map((collection) => (
-                <div key={collection.id} className="h-full">
-                  <CollectionCard
-                    collection={collection}
-                    onView={(col) => setActiveViewCollection(col)}
-                    onEdit={(col) => setActiveEditCollection(col)}
-                    onDelete={handleDeleteCollection}
-                  />
-                </div>
-              ))}
-            </div>
+          filteredAndSortedCollections.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {paginatedCollections.map((collection) => (
+                  <div key={collection.id} className="h-full">
+                    <CollectionCard
+                      collection={collection}
+                      onView={(col) => setActiveViewCollection(col)}
+                      onEdit={(col) => setActiveEditCollection(col)}
+                      onDelete={handleDeleteCollection}
+                    />
+                  </div>
+                ))}
+              </div>
 
-            {/* Pagination Controls (aligned to left) */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => {
-                setCurrentPage(page)
-                const section = document.getElementById('collections')
-                if (section) {
-                  section.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-            />
-          </>
+              {/* Pagination Controls (aligned to left) */}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => {
+                  setCurrentPage(page)
+                  const section = document.getElementById('collections')
+                  if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+              />
+            </>
+          ) : (
+            /* Search / Filter Empty State */
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16 px-6 bg-white border border-dashed border-[#e9dcf5] rounded-3xl max-w-md mx-auto shadow-xs"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[#faf0fe] border border-[#e9dcf5] flex items-center justify-center text-[#b63add] mx-auto mb-4">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-[#1f0c33] mb-1.5">No Matching Collections</h3>
+              <p className="text-xs text-[#624d78] mb-5 leading-relaxed">
+                No collections found matching your search or filters. Try adjusting your keyword or reset filters.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-5 py-2.5 rounded-xl bg-[#faf0fe] hover:bg-[#f5eefb] border border-[#e9dcf5] text-[#b63add] font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Reset Search &amp; Filters
+              </button>
+            </motion.div>
+          )
         ) : (
-          /* Empty state */
+          /* Initial Empty state when no collections exist at all */
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
