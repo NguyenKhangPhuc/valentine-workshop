@@ -8,6 +8,7 @@ import { CreateCollectionModal } from './CreateCollectionModal'
 import { EditCollectionModal } from './EditCollectionModal'
 import { MemoryBookModal } from './MemoryBookModal'
 import { deleteCollection } from '../actions/collection'
+import Pagination from './Pagination'
 
 interface CollectionListSectionProps {
   initialCollections: CollectionWithItems[]
@@ -98,11 +99,27 @@ const fallbackCollections: CollectionWithItems[] = [
   },
 ]
 
+const ITEMS_PER_PAGE = 6
+
 export function CollectionListSection({ initialCollections }: CollectionListSectionProps) {
   const [collections, setCollections] = useState<CollectionWithItems[]>(initialCollections)
+  const [currentPage, setCurrentPage] = useState(1)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [activeViewCollection, setActiveViewCollection] = useState<CollectionWithItems | null>(null)
   const [activeEditCollection, setActiveEditCollection] = useState<CollectionWithItems | null>(null)
+
+  const totalPages = Math.ceil(collections.length / ITEMS_PER_PAGE)
+  const paginatedCollections = collections.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  // Clamp current page if items are deleted or collections shrink
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages)
+    }
+  }, [collections.length, totalPages, currentPage])
 
   const handleDeleteCollection = async (collectionId: string) => {
     if (confirm('Are you sure you want to delete this collection?')) {
@@ -126,6 +143,7 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
 
   const handleCollectionCreated = (newCollection: CollectionWithItems) => {
     setCollections((prev) => [newCollection, ...prev])
+    setCurrentPage(1)
   }
 
   const handleCollectionEdited = (updatedCollection: CollectionWithItems) => {
@@ -162,20 +180,35 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
           </motion.button>
         </div>
 
-        {/* 4 Collections per row Grid Layout */}
+        {/* Collections Grid Layout & Left-aligned Pagination */}
         {collections.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-6">
-            {collections.map((collection) => (
-              <div key={collection.id}>
-                <CollectionCard
-                  collection={collection}
-                  onView={(col) => setActiveViewCollection(col)}
-                  onEdit={(col) => setActiveEditCollection(col)}
-                  onDelete={handleDeleteCollection}
-                />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {paginatedCollections.map((collection) => (
+                <div key={collection.id} className="h-full">
+                  <CollectionCard
+                    collection={collection}
+                    onView={(col) => setActiveViewCollection(col)}
+                    onEdit={(col) => setActiveEditCollection(col)}
+                    onDelete={handleDeleteCollection}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls (aligned to left) */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page)
+                const section = document.getElementById('collections')
+                if (section) {
+                  section.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
+            />
+          </>
         ) : (
           /* Empty state */
           <motion.div
