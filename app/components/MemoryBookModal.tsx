@@ -51,7 +51,7 @@ const BookPage = forwardRef<HTMLDivElement, PageProps>(({ children, className = 
   return (
     <div
       ref={ref}
-      className={`relative w-full h-full bg-white border border-[#e9dcf5] p-6 sm:p-8 flex flex-col justify-between overflow-hidden select-none shadow-md ${className}`}
+      className={`relative w-full h-full bg-white border border-[#e9dcf5] p-4 sm:p-6 md:p-8 flex flex-col justify-between overflow-hidden select-none shadow-md ${className}`}
     >
       {children}
     </div>
@@ -248,7 +248,7 @@ function ItemPageContent({
       {/* Image — first, right under toolbar */}
       <div
         ref={imageContainerRef}
-        className="w-full h-56 flex-shrink-0"
+        className="w-full h-36 sm:h-48 md:h-56 flex-shrink-0"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
@@ -265,10 +265,10 @@ function ItemPageContent({
             </div>
           </div>
         ) : (
-          <label className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${isDragging ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]' : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
+          <label className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-3 sm:p-4 text-center cursor-pointer transition-all ${isDragging ? 'border-[#b63add] bg-[#f4e6fc]/60 scale-[1.01]' : 'border-[#b63add]/40 bg-[#fcfbfe] hover:border-[#b63add] hover:bg-[#f4e6fc]/20'
             }`}>
             <input ref={fileInputRef} type="file" accept="image/png, image/jpeg, image/webp" onChange={(e) => { const files = e.target.files; if (files && files.length > 0) handleFileChange(files[0]) }} onClick={(e) => e.stopPropagation()} className="hidden" />
-            <div className="w-9 h-9 rounded-full bg-[#f4e6fc] text-[#b63add] flex items-center justify-center text-lg font-bold mb-1.5">+</div>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f4e6fc] text-[#b63add] flex items-center justify-center text-base sm:text-lg font-bold mb-1">+</div>
             <p className="text-xs font-semibold text-[#b63add]">Drop your image here</p>
             <p className="text-[10px] text-[#9681ab] mt-0.5">Supports PNG, JPG, WEBP</p>
           </label>
@@ -276,16 +276,18 @@ function ItemPageContent({
       </div>
 
       {/* Title & Description — horizontal center only */}
-      <div className="flex flex-col items-center text-center px-1">
-        <h4 className="text-base font-bold text-[#1f0c33] line-clamp-2 leading-tight mb-1">
+      <div className="flex flex-col items-center text-center px-1 overflow-hidden">
+        <h4 className="text-sm sm:text-base font-bold text-[#1f0c33] line-clamp-2 leading-tight mb-1">
           {item.name || 'Untitled Memory'}
         </h4>
         {memoryDate && (
           <span className="text-[10px] font-medium text-[#b63add] mb-1">Date: {memoryDate}</span>
         )}
-        <p className="text-[11px] text-[#624d78] leading-relaxed ">
-          {item.description || 'No notes added for this memory moment yet.'}
-        </p>
+        <div className="w-full max-h-20 sm:max-h-24 md:max-h-28 overflow-y-auto pr-1.5 text-[11px] text-[#624d78] leading-relaxed break-words [scrollbar-width:thin] [scrollbar-color:rgba(182,58,221,0.35)_#faf0fe] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#faf0fe] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#b63add]/35 hover:[&::-webkit-scrollbar-thumb]:bg-[#b63add] [&::-webkit-scrollbar-thumb]:rounded-full">
+          <p>
+            {item.description || 'No notes added for this memory moment yet.'}
+          </p>
+        </div>
       </div>
 
       {/* Footer: order + page number */}
@@ -312,11 +314,44 @@ export function MemoryBookModal({
   // Page number input state
   const [pageInput, setPageInput] = useState('1')
 
+  // Viewport tracking for single-page on Phone & iPad vs dual-page on Desktop
+  const [windowWidth, setWindowWidth] = useState<number>(() => {
+    return typeof window !== 'undefined' ? window.innerWidth : 1200
+  })
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const isMobile = windowWidth < 640
+  const isTablet = windowWidth >= 640 && windowWidth < 1024
+  const isDesktop = windowWidth >= 1024
+  const isSinglePage = !isDesktop // 1 page on Phone & iPad (< 1024px)
+
+  // Dynamic book dimensions
+  const bookWidth = useMemo(() => {
+    if (isMobile) {
+      return Math.min(Math.max(windowWidth - 36, 290), 360)
+    }
+    return 450
+  }, [isMobile, windowWidth])
+
+  const bookHeight = useMemo(() => {
+    if (isMobile) {
+      return Math.min(Math.max(Math.round(bookWidth * 1.38), 440), 520)
+    }
+    return 600
+  }, [isMobile, bookWidth])
+
+  const activeFlipKey = `${bookFlipKey}-${isSinglePage ? 'single' : 'spread'}-${isMobile ? 'm' : isTablet ? 't' : 'd'}-${bookWidth}`
+
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [itemToEdit, setItemToEdit] = useState<CollectionItem | null>(null)
-
-
 
   const maxPages = useMemo(() => {
     // 1 Front Cover + inner pages count (guaranteed even) + 1 Back Cover
@@ -435,7 +470,7 @@ export function MemoryBookModal({
 
           <div className="my-auto flex flex-col items-center max-w-xs">
             {posterUrl && (
-              <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg mb-4">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg mb-3 sm:mb-4">
                 <img
                   src={posterUrl}
                   alt="Collection Cover"
@@ -443,7 +478,7 @@ export function MemoryBookModal({
                 />
               </div>
             )}
-            <h2 className="text-2xl font-black text-white mb-2 leading-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-white mb-2 leading-tight">
               {collection.name || 'Untitled Collection'}
             </h2>
             <p className="text-xs text-white/80 line-clamp-3 leading-relaxed">
@@ -655,21 +690,25 @@ export function MemoryBookModal({
             </div>
           </div>
 
-          {/* FlipBook Container for 2-Page Spread */}
-          <div className="relative shadow-2xl rounded-2xl overflow-hidden p-2 sm:p-4 bg-gradient-to-r from-[#b63add]/30 via-transparent to-[#b63add]/30 max-w-full">
+          {/* FlipBook Container: 1 Page on Phone/iPad, 2-Page Spread on Desktop */}
+          <div
+            className={`relative shadow-2xl rounded-2xl overflow-hidden p-2 sm:p-4 bg-gradient-to-r from-[#b63add]/30 via-transparent to-[#b63add]/30 transition-all duration-300 flex justify-center ${
+              isSinglePage ? 'w-full max-w-[380px] sm:max-w-[500px]' : 'max-w-full'
+            }`}
+          >
             <HTMLFlipBook
-              key={bookFlipKey}
+              key={activeFlipKey}
               ref={flipBookRef}
-              width={450}
-              height={600}
+              width={bookWidth}
+              height={bookHeight}
               size="fixed"
-              minWidth={320}
+              minWidth={isMobile ? 290 : 320}
               maxWidth={500}
-              minHeight={500}
+              minHeight={isMobile ? 440 : 500}
               maxHeight={650}
               maxShadowOpacity={0.5}
               showCover={true}
-              usePortrait={false}
+              usePortrait={isSinglePage}
               mobileScrollSupport={false}
               useMouseEvents={false}
               clickEventForward={false}
