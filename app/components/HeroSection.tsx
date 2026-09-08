@@ -151,14 +151,14 @@ export function HeroSection() {
         style={{ y: textY, opacity }}
         className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto flex flex-col items-center"
       >
-        {/* Main Title: ValentineBook */}
+        {/* Main Title: MemoryBook */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none mb-10 text-white drop-shadow-2xl"
         >
-          Valentine<span
+          Memory<span
             className="inline-block ml-1 px-3 py-1 rounded-xl text-[#b63add]"
             style={{ background: 'rgba(255,255,255,0.97)' }}
           >Book</span>

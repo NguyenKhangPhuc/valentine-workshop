@@ -464,7 +464,7 @@ export function MemoryBookModal({
         <div className="h-full flex flex-col justify-between items-center text-center p-4">
           <div className="w-full border-b border-white/20 pb-3">
             <span className="text-[10px] uppercase font-bold tracking-widest text-white/80">
-              Valentine Memory Book
+              Memory Book
             </span>
           </div>
 

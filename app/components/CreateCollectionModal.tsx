@@ -169,7 +169,7 @@ export function CreateCollectionModal({ isOpen, onClose, onCreated }: CreateColl
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. posters/valentine_trip.jpg"
+                  placeholder="e.g. posters/memory_trip.jpg"
                   {...register('poster_url')}
                   className="w-full bg-[#fcfbfe] border border-[#e9dcf5] focus:border-[#b63add] focus:ring-1 focus:ring-[#b63add] rounded-xl px-4 py-2.5 text-sm text-[#1f0c33] placeholder-gray-400 outline-none transition-all"
                 />

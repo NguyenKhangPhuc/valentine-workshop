@@ -18,7 +18,7 @@ interface CollectionListSectionProps {
 const fallbackCollections: CollectionWithItems[] = [
   {
     id: 'sample-1',
-    name: 'Valentine Trip in Lapland',
+    name: 'Winter Trip in Lapland',
     description: 'Beautiful romantic trip memories amidst northern lights and snow.',
     poster_url: '/zng_bg.png',
     start_time: '2026-02-14',
@@ -353,7 +353,7 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
           >
             <h3 className="text-xl font-bold text-[#1f0c33] mb-2">No Collections Yet</h3>
             <p className="text-sm text-[#624d78] mb-6">
-              Start building your digital Valentine memory book by creating your first memory collection!
+              Start building your digital memory book by creating your first memory collection!
             </p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
