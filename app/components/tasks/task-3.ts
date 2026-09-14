@@ -120,6 +120,7 @@ export async function createMemory(
     showNotification?.('Memory item created successfully!')
 
     if (onSuccess) {
+      console.log(newItem)
       onSuccess(newItem)
     }
 

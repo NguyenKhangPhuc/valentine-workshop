@@ -101,7 +101,7 @@ export async function editCollection(
     const updatedCollection: CollectionWithItems = {
       ...collection,
       ...updatePayload,
-      poster_url: collection.poster_url,
+      poster_url: res.data?.poster_url ?? null,
       collection_items: collection.collection_items ?? [],
     }
 

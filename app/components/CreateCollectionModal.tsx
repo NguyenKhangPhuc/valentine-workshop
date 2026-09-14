@@ -4,7 +4,7 @@ import React from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
-import { createNewCollection } from '../actions/collection'
+import { createCollection } from './tasks/task-1'
 import { useNotification } from '../context/NotificationContext'
 
 interface CreateCollectionModalProps {
@@ -38,41 +38,11 @@ export function CreateCollectionModal({ isOpen, onClose, onCreated }: CreateColl
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      const payload = {
-        name: data.name,
-        description: data.description || null,
-        start_time: data.start_time || null,
-        end_time: data.end_time || null,
-        poster_url: null,
-      }
-
-      const res = await createNewCollection(payload)
-      let createdCol: CollectionWithItems
-
-      if (res?.data) {
-        createdCol = {
-          ...res.data,
-          collection_items: [],
-        }
-      } else {
-        createdCol = {
-          id: 'col-' + Date.now(),
-          name: payload.name,
-          description: payload.description,
-          start_time: payload.start_time,
-          end_time: payload.end_time,
-          poster_url: null,
-          created_at: new Date().toISOString(),
-          collection_items: [],
-        }
-      }
-      showNotification('Collection created successfully!')
-      onCreated?.(createdCol)
+      await createCollection(data, onCreated, showNotification)
       reset()
       onClose()
     } catch (err) {
       console.error('Failed to create collection:', err)
-      showNotification('Failed to create collection.')
     }
   }
 

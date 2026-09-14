@@ -78,7 +78,7 @@ export async function editMemory(
       name: data.name,
       description: data.description || null,
       memory_date: data.memory_date || null,
-      order: data.order ?? itemToEdit.order ?? 1,
+      order: data.order,
     }
 
     // --------------------------------------------------------------------------
@@ -98,9 +98,8 @@ export async function editMemory(
     // --------------------------------------------------------------------------
     // Ensure fields like `image_url` and `collection_id` are intact
     const updatedItem: CollectionItem = {
-      ...itemToEdit,
       ...res.data,
-      image_url: itemToEdit.image_url, // Safeguard existing image path
+      image_url: res.data.image_url, // Safeguard existing image path
     }
 
     // --------------------------------------------------------------------------
