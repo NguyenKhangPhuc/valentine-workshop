@@ -9,17 +9,19 @@
  * @description
  * This task handles editing the textual metadata of an existing collection
  * (title/name, description, start time, end time).
- * It sanitizes user inputs, constructs a partial update payload targeting the
- * collection's primary key (`id`), sends the update to Supabase via a Next.js Server Action,
- * and produces a merged CollectionWithItems object that preserves existing nested items
- * and poster attachments.
+ * Upstream field validation (such as requiring a name) is handled declaratively
+ * by React Hook Form (`register`, `required`).
+ * This function receives the pre-validated form data, constructs a partial update
+ * payload targeting the collection's primary key (`id`), sends the update to Supabase
+ * via a Next.js Server Action, and produces a merged CollectionWithItems object that
+ * preserves existing nested items and poster attachments.
  *
  * NOTE: This function specifically manages collection metadata (text fields and dates),
  * NOT the collection poster image file upload (which is handled separately in Task 7).
  *
  * @usedBy
  * - `EditCollectionModal.tsx` (`app/components/EditCollectionModal.tsx`)
- *   Invoked when the user updates collection details in the edit dialog and submits the form.
+ *   Invoked inside `handleSubmit(onSubmit)` when the user updates collection details in the edit dialog.
  */
 
 import { CollectionWithItems } from '../../types/collection'
@@ -27,9 +29,10 @@ import { updateCollection } from '../../actions/collection'
 
 /**
  * Form inputs for updating an existing collection.
+ * Upstream validation is handled by React Hook Form.
  */
 export interface EditCollectionFormInputs {
-  /** Updated collection name or title (required) */
+  /** Updated collection name or title (required, validated by React Hook Form) */
   name: string
   /** Updated description or notes (optional) */
   description?: string
@@ -43,8 +46,9 @@ export interface EditCollectionFormInputs {
  * Updates an existing collection's textual metadata and returns the merged collection object.
  *
  * @param {CollectionWithItems} collection - The existing collection object being edited.
- * @param {EditCollectionFormInputs} data - The updated form fields entered by the user.
+ * @param {EditCollectionFormInputs} data - Pre-validated form fields from React Hook Form.
  * @param {(updatedCollection: CollectionWithItems) => void} [onSuccess] - Optional callback triggered with the updated collection.
+ * @param {(message: string) => void} [showNotification] - Optional notification trigger for success and error alerts.
  * @returns {Promise<CollectionWithItems>} The merged collection object containing the updated fields.
  *
  * @example
@@ -52,71 +56,69 @@ export interface EditCollectionFormInputs {
  * const updated = await editCollection(
  *   currentCollection,
  *   { name: "Summer in Lapland", description: "Updated summer notes" },
- *   (updatedCol) => replaceCollectionInState(updatedCol)
+ *   (updatedCol) => replaceCollectionInState(updatedCol),
+ *   showNotification
  * );
  * ```
  */
 export async function editCollection(
   collection: CollectionWithItems,
   data: EditCollectionFormInputs,
-  onSuccess?: (updatedCollection: CollectionWithItems) => void
+  onSuccess?: (updatedCollection: CollectionWithItems) => void,
+  showNotification?: (message: string) => void
 ): Promise<CollectionWithItems> {
-  // --------------------------------------------------------------------------
-  // Step 1: Validate input parameters and prerequisites
-  // --------------------------------------------------------------------------
-  // Verify that an existing collection with a valid ID was supplied.
-  if (!collection || !collection.id) {
-    throw new Error('Invalid collection: An existing collection with a valid ID is required.')
-  }
+  try {
+    // --------------------------------------------------------------------------
+    // Step 1: Construct the partial update payload
+    // --------------------------------------------------------------------------
+    // Form validation (e.g. required collection name) is handled upfront by
+    // React Hook Form via `{ required: 'Collection name is required' }`.
+    // We map the validated inputs directly to our update payload with the target ID.
+    const updatePayload = {
+      id: collection.id,
+      name: data.name,
+      description: data.description || null,
+      start_time: data.start_time || null,
+      end_time: data.end_time || null,
+    }
 
-  // Verify that the title/name is not blank
-  if (!data.name || data.name.trim() === '') {
-    throw new Error('Collection name is required and cannot be empty.')
-  }
+    // --------------------------------------------------------------------------
+    // Step 2: Invoke the Next.js Server Action to update Supabase
+    // --------------------------------------------------------------------------
+    // `updateCollection` executes a parameterized UPDATE query on the 'collections' table.
+    const res = await updateCollection(updatePayload)
+    if (res?.error) {
+      console.error('Failed to update collection in database:', res.error)
+      showNotification?.('Failed to update collection: ' + res.error)
+      throw new Error(res.error)
+    }
 
-  // --------------------------------------------------------------------------
-  // Step 2: Construct the partial update payload
-  // --------------------------------------------------------------------------
-  // We specify the target ID and convert optional empty strings to `null`
-  // so that cleared inputs properly clear values in the database.
-  const updatePayload = {
-    id: collection.id,
-    name: data.name.trim(),
-    description: data.description?.trim() || null,
-    start_time: data.start_time || null,
-    end_time: data.end_time || null,
-  }
+    // --------------------------------------------------------------------------
+    // Step 3: Merge updated fields into the existing collection object
+    // --------------------------------------------------------------------------
+    // To avoid wiping out items or poster URL, we merge the existing collection
+    // with the new payload values.
+    const updatedCollection: CollectionWithItems = {
+      ...collection,
+      ...updatePayload,
+      poster_url: collection.poster_url,
+      collection_items: collection.collection_items ?? [],
+    }
 
-  // --------------------------------------------------------------------------
-  // Step 3: Invoke the Next.js Server Action to update Supabase
-  // --------------------------------------------------------------------------
-  // `updateCollection` executes a parameterized UPDATE query on the 'collections' table.
-  const res = await updateCollection(updatePayload)
-  if (res?.error) {
-    console.error('Failed to update collection in database:', res.error)
-    throw new Error(res.error)
-  }
+    // --------------------------------------------------------------------------
+    // Step 4: Trigger success notification and notify parent state listeners
+    // --------------------------------------------------------------------------
+    showNotification?.('Collection updated successfully!')
 
-  // --------------------------------------------------------------------------
-  // Step 4: Merge updated fields into the existing collection object
-  // --------------------------------------------------------------------------
-  // To avoid wiping out items or poster URL, we merge the existing collection
-  // with the new payload values.
-  const updatedCollection: CollectionWithItems = {
-    ...collection,
-    ...updatePayload,
-    poster_url: collection.poster_url,
-    collection_items: collection.collection_items ?? [],
-  }
+    if (onSuccess) {
+      onSuccess(updatedCollection)
+    }
 
-  // --------------------------------------------------------------------------
-  // Step 5: Notify parent state listeners
-  // --------------------------------------------------------------------------
-  // Trigger the parent callback to seamlessly update state across the application
-  if (onSuccess) {
-    onSuccess(updatedCollection)
+    // Return the newly merged collection
+    return updatedCollection
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Failed to update collection.'
+    showNotification?.(errorMsg)
+    throw error
   }
-
-  // Return the newly merged collection
-  return updatedCollection
 }
