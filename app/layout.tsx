@@ -4,6 +4,7 @@ import "./globals.css";
 import { NotificationProvider } from "./context/NotificationContext";
 import { LoaderProvider } from "./context/LoaderContext";
 import NotificationCard from "./components/Notification";
+import { colorManagement } from "./components/tasks/color-management";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <NotificationProvider>
         <LoaderProvider>
-          <body className="min-h-full flex flex-col">
+          <body
+            className="min-h-full flex flex-col"
+            style={{ backgroundColor: colorManagement.homePage.pageBackground }}
+          >
             {children}
             <NotificationCard />
           </body>

@@ -66,69 +66,76 @@ export async function createMemory(
   showNotification?: (message: string) => void
 ): Promise<CollectionItem> {
   try {
-    // --------------------------------------------------------------------------
-    // Step 1: Assemble the database insert payload
-    // --------------------------------------------------------------------------
-    // Form validation (such as checking required name) is handled upfront by
-    // React Hook Form via `{ required: 'Memory name is required' }`.
-    // We map the validated inputs directly to `CollectionItemInsert`.
+    // Assemble the database payload linking this memory to its parent collection.
     const payload: CollectionItemInsert = {
+      // Assign foreign key of the parent collection.
       collection_id: collectionId,
+      // Assign the validated memory title/name.
       name: data.name,
+      // Assign optional description or fallback to null.
       description: data.description || null,
+      // Assign optional memory date or fallback to null.
       memory_date: data.memory_date || null,
+      // Set page display order, defaulting to page 1 if omitted.
       order: data.order ?? 1,
+      // Initialize image URL as null before optional file upload.
       image_url: null,
     }
 
-    // --------------------------------------------------------------------------
-    // Step 2: Insert the memory record into Supabase
-    // --------------------------------------------------------------------------
-    // Execute the Server Action to create the row in the 'collection_items' table.
+    // Call server action createNewCollectionItem to insert the row in Supabase.
     const res = await createNewCollectionItem(payload)
+
+    // Check if the server action failed or did not return inserted data.
     if (res?.error || !res?.data) {
+      // Formulate error message from response or fallback string.
       const errorMessage = res?.error ?? 'Failed to create memory item in the database.'
+      // Log database error to the developer console.
       console.error(errorMessage)
+      // Display error notification toast to the user.
       showNotification?.(errorMessage)
+      // Throw error to abort creation and enter catch block.
       throw new Error(errorMessage)
     }
 
-    // Store the newly created record with its database-assigned primary key (`id`)
+    // Store the newly created memory record returned from database.
     let newItem: CollectionItem = res.data
 
-    // --------------------------------------------------------------------------
-    // Step 3: Upload optional image attachment to Supabase Storage
-    // --------------------------------------------------------------------------
-    // If the user selected a photo during creation, upload it using the newly
-    // obtained `newItem.id` as the storage bucket folder prefix.
+    // Check if an image attachment file was provided by the user.
     if (posterFile) {
+      // Upload image to storage bucket using item ID as directory prefix.
       const resPoster = await updateCollectionItemPoster(newItem, posterFile)
+      // Verify storage upload succeeded and returned a storage path.
       if (resPoster?.data && !resPoster.error) {
-        // Update our local representation with the saved storage path
+        // Update local memory item representation with the uploaded image path.
         newItem = {
           ...newItem,
           image_url: resPoster.data,
         }
+      // Handle scenario where memory was created but file upload encountered an error.
       } else if (resPoster?.error) {
+        // Log warning that record was created but image upload failed.
         console.warn('Memory record created, but image upload failed:', resPoster.error)
       }
     }
 
-    // --------------------------------------------------------------------------
-    // Step 4: Trigger success notification and notify parent state listeners
-    // --------------------------------------------------------------------------
+    // Display a success toast notification to the user.
     showNotification?.('Memory item created successfully!')
 
+    // Check if an onSuccess callback was provided.
     if (onSuccess) {
+      // Log new item and notify parent component with the completed record.
       console.log(newItem)
       onSuccess(newItem)
     }
 
-    // Return the completed memory item
+    // Return the newly created memory item to the caller.
     return newItem
   } catch (error) {
+    // Extract error message string from caught error object.
     const errorMsg = error instanceof Error ? error.message : 'Failed to create memory item.'
+    // Display failure toast notification with the error details.
     showNotification?.(errorMsg)
+    // Re-throw error so the calling modal can retain form input for retry.
     throw error
   }
 }

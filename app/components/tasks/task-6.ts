@@ -40,17 +40,10 @@ export function onSortChange(
   setSortBy: (sort: SortOption) => void,
   setCurrentPage: (page: number) => void
 ): void {
-  // --------------------------------------------------------------------------
-  // Step 1: Update the sort state
-  // --------------------------------------------------------------------------
-  // Tell React which sort criterion is now active
+  // Update state with the newly selected sorting option.
   setSortBy(newSort)
 
-  // --------------------------------------------------------------------------
-  // Step 2: Reset pagination to the first page
-  // --------------------------------------------------------------------------
-  // Resetting to page 1 prevents being stranded on a non-existent page index
-  // when re-ordering results.
+  // Reset pagination back to page 1 to prevent empty pages on re-sort.
   setCurrentPage(1)
 }
 
@@ -70,90 +63,109 @@ export function sortCollections(
   collections: CollectionWithItems[],
   sortBy: SortOption
 ): CollectionWithItems[] {
-  // --------------------------------------------------------------------------
-  // Step 1: Return early for trivial cases
-  // --------------------------------------------------------------------------
+  // Check if collections list has 1 or fewer items to skip sorting.
   if (!collections || collections.length <= 1) {
+    // Return original array or empty array if null/undefined.
     return collections || []
   }
 
-  // --------------------------------------------------------------------------
-  // Step 2: Create a shallow copy for immutability
-  // --------------------------------------------------------------------------
-  // Do NOT mutate the original collections array directly!
+  // Create shallow copy of array to maintain immutability and avoid mutating props.
   const sorted = [...collections]
 
-  // --------------------------------------------------------------------------
-  // Step 3: Execute sorting comparator based on the selected option
-  // --------------------------------------------------------------------------
+  // Sort array in-place using comparator based on active sort option.
   sorted.sort((a, b) => {
+    // Determine comparator logic corresponding to selected sortBy option.
     switch (sortBy) {
-      // Sort by creation date: newest first
+      // Sort collections by newest creation timestamp first.
       case 'created_at_desc': {
+        // Parse creation date of collection A into epoch milliseconds.
         const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
+        // Parse creation date of collection B into epoch milliseconds.
         const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
+        // Calculate descending difference so newer dates appear first.
         return timeB - timeA
       }
 
-      // Sort by creation date: oldest first
+      // Sort collections by oldest creation timestamp first.
       case 'created_at_asc': {
+        // Parse creation date of collection A into epoch milliseconds.
         const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
+        // Parse creation date of collection B into epoch milliseconds.
         const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
+        // Calculate ascending difference so older dates appear first.
         return timeA - timeB
       }
 
-      // Sort alphabetically: A to Z
+      // Sort collections alphabetically by name from A to Z.
       case 'name_asc': {
+        // Retrieve name of collection A or empty string fallback.
         const nameA = a.name || ''
+        // Retrieve name of collection B or empty string fallback.
         const nameB = b.name || ''
+        // Compare names in ascending alphabetical order.
         return nameA.localeCompare(nameB)
       }
 
-      // Sort alphabetically: Z to A
+      // Sort collections alphabetically by name from Z to A.
       case 'name_desc': {
+        // Retrieve name of collection A or empty string fallback.
         const nameA = a.name || ''
+        // Retrieve name of collection B or empty string fallback.
         const nameB = b.name || ''
+        // Compare names in descending alphabetical order.
         return nameB.localeCompare(nameA)
       }
 
-      // Sort by number of memory moments: most memories first
+      // Sort collections by memory count in descending order.
       case 'items_desc': {
+        // Count number of memory items in collection A.
         const countA = a.collection_items?.length || 0
+        // Count number of memory items in collection B.
         const countB = b.collection_items?.length || 0
+        // Return descending difference so collections with most items appear first.
         return countB - countA
       }
 
-      // Sort by number of memory moments: fewest memories first
+      // Sort collections by memory count in ascending order.
       case 'items_asc': {
+        // Count number of memory items in collection A.
         const countA = a.collection_items?.length || 0
+        // Count number of memory items in collection B.
         const countB = b.collection_items?.length || 0
+        // Return ascending difference so collections with fewest items appear first.
         return countA - countB
       }
 
-      // Sort by trip/event start date: earliest first
+      // Sort collections by event start date in ascending order (earliest first).
       case 'start_date_asc': {
-        // Handle items without a start date by placing them at the bottom
+        // Keep order if both collections have no start date.
         if (!a.start_time && !b.start_time) return 0
+        // Place collection without start date after collection with date.
         if (!a.start_time) return 1
+        // Place collection with start date before collection without date.
         if (!b.start_time) return -1
+        // Compare start timestamps in ascending order.
         return new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
       }
 
-      // Sort by trip/event start date: latest first
+      // Sort collections by event start date in descending order (latest first).
       case 'start_date_desc': {
-        // Handle items without a start date by placing them at the bottom
+        // Keep order if both collections have no start date.
         if (!a.start_time && !b.start_time) return 0
+        // Place collection without start date after collection with date.
         if (!a.start_time) return 1
+        // Place collection with start date before collection without date.
         if (!b.start_time) return -1
+        // Compare start timestamps in descending order.
         return new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
       }
 
-      // Fallback: Maintain original order if unrecognized sort option
+      // Return 0 as default to preserve original order for unrecognized sort keys.
       default:
         return 0
     }
   })
 
-  // Return the newly ordered array
+  // Return the newly sorted array of collections.
   return sorted
 }

@@ -51,86 +51,99 @@ export async function editMemoryPoster(
   showNotification?: (message: string) => void
 ): Promise<CollectionItem> {
   try {
-    // --------------------------------------------------------------------------
-    // Step 1: Validate item existence
-    // --------------------------------------------------------------------------
-    // Ensure the target memory item is defined and contains an ID
+    // Check if target memory item is valid and has an ID.
     if (!item || !item.id) {
+      // Define error message for missing item reference.
       const errorMsg = 'Invalid memory item: A memory item with a valid ID is required to update its image.'
+      // Show error toast notification to user.
       showNotification?.(errorMsg)
+      // Throw error to abort photo update.
       throw new Error(errorMsg)
     }
 
-    // --------------------------------------------------------------------------
-    // Step 2: Handle case A - Upload / Replace photo
-    // --------------------------------------------------------------------------
+    // Check if user provided an image file to upload or replace photo.
     if (file != null) {
-      // Validate that the uploaded file is a supported image format
+      // Define supported image MIME types for client-side validation.
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+      // Verify uploaded file type against permitted list.
       if (!validTypes.includes(file.type.toLowerCase())) {
+        // Define format rejection error message.
         const errorMsg = 'Unsupported image format. Please upload PNG, JPG, or WEBP images.'
+        // Display toast error notification to the user.
         showNotification?.(errorMsg)
+        // Throw error to abort file upload.
         throw new Error(errorMsg)
       }
 
-      // Call the Next.js Server Action to upload to Supabase Storage
+      // Call server action updateCollectionItemPoster to upload to storage and update DB.
       const res = await updateCollectionItemPoster(item, file)
+      // Check if server upload returned an error.
       if (res?.error) {
+        // Log image upload error to console.
         console.error('Failed to update memory image in storage:', res.error)
+        // Show failure toast notification to the user.
         showNotification?.('Failed to update image: ' + res.error)
+        // Throw error to break out of execution.
         throw new Error(res.error)
       }
 
-      // Create a client-side object URL for immediate optimistic UI preview
+      // Create client-side object URL for immediate optimistic UI preview.
       const previewUrl = URL.createObjectURL(file)
 
-      // Assemble the updated memory item
+      // Assemble updated memory item state with new preview URL.
       const updatedItem: CollectionItem = {
         ...item,
         image_url: previewUrl,
       }
 
-      // Trigger success notification
+      // Show success toast notification upon successful photo update.
       showNotification?.('Memory photo updated successfully!')
 
-      // Trigger parent callback (e.g. updating the flip book's memory item list)
+      // Check if onSuccess callback was provided.
       if (onSuccess) {
+        // Invoke callback to pass updated item to parent state (isEdit = true).
         onSuccess(updatedItem, true)
       }
 
+      // Return the updated memory item record.
       return updatedItem
     }
 
-    // --------------------------------------------------------------------------
-    // Step 3: Handle case B - Remove / Clear photo
-    // --------------------------------------------------------------------------
-    // When file is null, the user chose to remove the photo.
-    // Invoke the server action with null to delete the cloud file and set DB column to null.
+    // Handle case when file is null: call server action to delete photo from storage.
     const res = await updateCollectionItemPoster(item, null)
+    // Check if removal server action returned an error.
     if (res?.error) {
+      // Log storage removal error to console.
       console.error('Failed to remove memory image from storage:', res.error)
+      // Show failure toast notification to user.
       showNotification?.('Failed to remove image: ' + res.error)
+      // Throw error to enter catch block.
       throw new Error(res.error)
     }
 
-    // Assemble the updated memory item with image_url set to null
+    // Assemble updated memory item state with image_url cleared to null.
     const clearedItem: CollectionItem = {
       ...item,
       image_url: null,
     }
 
-    // Trigger success notification
+    // Show success toast notification indicating photo removal.
     showNotification?.('Memory photo removed successfully!')
 
-    // Trigger parent callback
+    // Check if onSuccess callback was provided.
     if (onSuccess) {
+      // Invoke callback to notify parent state that image was removed (isEdit = false).
       onSuccess(clearedItem, false)
     }
 
+    // Return the cleared memory item object.
     return clearedItem
   } catch (error) {
+    // Extract error message string from caught error object.
     const errorMsg = error instanceof Error ? error.message : 'Failed to update memory photo.'
+    // Display error toast notification to alert the user.
     showNotification?.(errorMsg)
+    // Re-throw error to let calling modal handle failure.
     throw error
   }
 }

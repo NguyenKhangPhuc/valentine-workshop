@@ -48,86 +48,99 @@ export async function editCollectionPoster(
   showNotification?: (message: string) => void
 ): Promise<CollectionWithItems> {
   try {
-    // --------------------------------------------------------------------------
-    // Step 1: Validate collection existence
-    // --------------------------------------------------------------------------
-    // Ensure the target collection is defined and has an ID
+    // Check if target collection is valid and contains an ID.
     if (!collection || !collection.id) {
+      // Define error message for missing collection reference.
       const errorMsg = 'Invalid collection: A collection with a valid ID is required to update its poster.'
+      // Show error toast notification to user.
       showNotification?.(errorMsg)
+      // Throw error to cancel execution.
       throw new Error(errorMsg)
     }
 
-    // --------------------------------------------------------------------------
-    // Step 2: Handle case A - File Upload (Replacing or setting a poster)
-    // --------------------------------------------------------------------------
+    // Check if user provided a file to upload or replace poster.
     if (file != null) {
-      // Basic MIME type validation on client side for fast user feedback
+      // Define supported image MIME types for client-side validation.
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+      // Verify uploaded file format against valid MIME types list.
       if (!validTypes.includes(file.type.toLowerCase())) {
+        // Define format rejection error message.
         const errorMsg = 'Unsupported file format. Please upload PNG, JPG, or WEBP images.'
+        // Display toast error notification to the user.
         showNotification?.(errorMsg)
+        // Throw error to abort file upload.
         throw new Error(errorMsg)
       }
 
-      // Call the Next.js Server Action to upload to Supabase Storage and update the DB row
+      // Call server action updateCollectionPoster to upload to storage and update DB.
       const res = await updateCollectionPoster(collection, file)
+      // Check if server upload returned an error.
       if (res?.error) {
+        // Log storage upload error to console.
         console.error('Failed to upload collection poster:', res.error)
+        // Show failure toast notification to the user.
         showNotification?.('Failed to update poster: ' + res.error)
+        // Throw error to break out of execution.
         throw new Error(res.error)
       }
 
-      // Generate a temporary browser object URL for immediate optimistic UI display
+      // Create client-side object URL for immediate optimistic UI preview.
       const previewUrl = URL.createObjectURL(file)
 
-      // Assemble the updated collection state
+      // Assemble updated collection state containing new preview URL.
       const updatedCollection: CollectionWithItems = {
         ...collection,
         poster_url: previewUrl,
       }
 
-      // Trigger success notification
+      // Show success toast notification upon successful poster update.
       showNotification?.('Collection poster updated successfully!')
 
-      // Trigger parent callback
+      // Check if onSuccess callback was provided.
       if (onSuccess) {
+        // Invoke callback to pass updated collection to parent state.
         onSuccess(updatedCollection)
       }
 
+      // Return the updated collection object.
       return updatedCollection
     }
 
-    // --------------------------------------------------------------------------
-    // Step 3: Handle case B - File Removal (Clearing existing poster)
-    // --------------------------------------------------------------------------
-    // When file is null, the user wants to remove the cover image.
-    // We invoke the server action with null to delete the cloud file and set DB column to null.
+    // Handle case when file is null: call server action to delete poster and set column null.
     const res = await updateCollectionPoster(collection, null)
+    // Check if removal server action returned an error.
     if (res?.error) {
+      // Log storage removal error to console.
       console.error('Failed to clear collection poster:', res.error)
+      // Show failure toast notification to user.
       showNotification?.('Failed to remove poster: ' + res.error)
+      // Throw error to enter catch block.
       throw new Error(res.error)
     }
 
-    // Assemble the updated collection state with poster_url set to null
+    // Assemble updated collection state with poster_url cleared to null.
     const clearedCollection: CollectionWithItems = {
       ...collection,
       poster_url: null,
     }
 
-    // Trigger success notification
+    // Show success toast notification indicating poster removal.
     showNotification?.('Collection poster removed successfully!')
 
-    // Trigger parent callback
+    // Check if onSuccess callback was provided.
     if (onSuccess) {
+      // Invoke callback to notify parent state of poster removal.
       onSuccess(clearedCollection)
     }
 
+    // Return the cleared collection object.
     return clearedCollection
   } catch (error) {
+    // Extract error message string from caught error object.
     const errorMsg = error instanceof Error ? error.message : 'Failed to update collection poster.'
+    // Display error toast notification to alert the user.
     showNotification?.(errorMsg)
+    // Re-throw error to let calling modal handle failure.
     throw error
   }
 }

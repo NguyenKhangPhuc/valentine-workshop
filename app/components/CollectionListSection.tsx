@@ -12,6 +12,7 @@ import Pagination from './Pagination'
 import { CollectionToolbar, SortOption } from './CollectionToolbar'
 import { searchByTitleOrDescription } from './tasks/task-5'
 import { sortCollections, onSortChange } from './tasks/task-6'
+import { colorManagement } from './tasks/color-management'
 
 interface CollectionListSectionProps {
   initialCollections: CollectionWithItems[]
@@ -182,27 +183,51 @@ export function CollectionListSection({ initialCollections }: CollectionListSect
   }
 
   return (
-    <section id="collections" className="w-full py-16 md:py-24 bg-[#fcfbfe] text-[#1f0c33] relative z-20">
+    <section
+      id="collections"
+      className="w-full py-16 md:py-24 relative z-20"
+      style={{
+        backgroundColor: colorManagement.homePage.pageBackground,
+        color: colorManagement.homePage.textColor,
+      }}
+    >
       {/* Container - Not too tight/narrow padding */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b border-[#e9dcf5]">
+        <div
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b"
+          style={{ borderColor: colorManagement.homePage.collectionsSectionBorderColor }}
+        >
           <div>
-            <span className="text-[#b63add] text-xs font-bold uppercase tracking-widest block mb-1">
+            <span
+              className="text-xs font-bold uppercase tracking-widest block mb-1"
+              style={{ color: colorManagement.homePage.categoryLabelColor }}
+            >
               Memory Albums
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#1f0c33] flex items-center gap-2">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight flex items-center gap-2">
               <span>Your Collections</span>
-              <span className="text-[#b63add] text-2xl font-normal">({collections.length})</span>
+              <span
+                className="text-2xl font-normal"
+                style={{ color: colorManagement.homePage.categoryLabelColor }}
+              >({collections.length})</span>
             </h2>
           </div>
 
           {/* Create Button */}
           <motion.button
-            whileHover={{ scale: 1.04 }}
+            whileHover={{
+              scale: 1.04,
+              backgroundColor: colorManagement.createCollectionButton.hoverBackgroundColor,
+            }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-6 py-3 rounded-xl bg-[#b63add] hover:bg-[#9c28bd] text-white font-semibold text-sm transition-all shadow-lg shadow-[#b63add]/25 flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+            className="px-6 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+            style={{
+              backgroundColor: colorManagement.createCollectionButton.backgroundColor,
+              color: colorManagement.createCollectionButton.textColor,
+              boxShadow: colorManagement.createCollectionButton.shadowColor,
+            }}
           >
             <span className="text-lg leading-none">+</span>
             <span>Create Collection</span>

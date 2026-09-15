@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { colorManagement } from './tasks/color-management'
 
 export function Navbar() {
   const [activeSection, setActiveSection] = useState<'home' | 'collections'>('home')
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -24,6 +26,26 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const getItemStyle = (section: 'home' | 'collections') => {
+    const isActive = activeSection === section
+    if (isActive) {
+      return {
+        color: colorManagement.navItem.activeTextColor,
+        backgroundColor: colorManagement.navItem.activeBackgroundColor,
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+      }
+    }
+    const isHovered = hoveredSection === section
+    return {
+      color: isHovered
+        ? colorManagement.navItem.inactiveHoverTextColor
+        : colorManagement.navItem.inactiveTextColor,
+      backgroundColor: isHovered
+        ? colorManagement.navItem.inactiveHoverBackgroundColor
+        : 'transparent',
+    }
+  }
+
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
@@ -35,22 +57,25 @@ export function Navbar() {
         className="pointer-events-auto flex items-center gap-1 px-3 py-2 rounded-full border transition-all duration-500"
         style={{
           background: scrolled
-            ? 'rgba(255,255,255,0.12)'
-            : 'transparent',
+            ? colorManagement.navbar.scrolledBackground
+            : colorManagement.navbar.unscrolledBackground,
           backdropFilter: scrolled ? 'blur(16px)' : 'blur(0px)',
           WebkitBackdropFilter: scrolled ? 'blur(16px)' : 'blur(0px)',
-          borderColor: scrolled ? 'rgba(255,255,255,0.2)' : 'transparent',
-          boxShadow: scrolled ? '0 4px 24px rgba(182,58,221,0.12)' : 'none',
+          borderColor: scrolled
+            ? colorManagement.navbar.scrolledBorderColor
+            : colorManagement.navbar.unscrolledBorderColor,
+          boxShadow: scrolled
+            ? colorManagement.navbar.scrolledShadowColor
+            : 'none',
         }}
       >
         <Link
           href="#home"
           onClick={() => setActiveSection('home')}
-          className={`relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-            activeSection === 'home'
-              ? 'text-[#b63add] bg-white shadow-sm'
-              : 'text-white/90 hover:text-white hover:bg-white/10'
-          }`}
+          onMouseEnter={() => setHoveredSection('home')}
+          onMouseLeave={() => setHoveredSection(null)}
+          className="relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200"
+          style={getItemStyle('home')}
         >
           Home
         </Link>
@@ -58,11 +83,10 @@ export function Navbar() {
         <Link
           href="#collections"
           onClick={() => setActiveSection('collections')}
-          className={`relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-            activeSection === 'collections'
-              ? 'text-[#b63add] bg-white shadow-sm'
-              : 'text-white/90 hover:text-white hover:bg-white/10'
-          }`}
+          onMouseEnter={() => setHoveredSection('collections')}
+          onMouseLeave={() => setHoveredSection(null)}
+          className="relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200"
+          style={getItemStyle('collections')}
         >
           Collections
         </Link>

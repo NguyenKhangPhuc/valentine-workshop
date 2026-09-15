@@ -64,49 +64,47 @@ export async function createCollection(
   showNotification?: (message: string) => void
 ): Promise<CollectionWithItems> {
   try {
-    // --------------------------------------------------------------------------
-    // Step 1: Map form inputs to the database payload
-    // --------------------------------------------------------------------------
-    // Form validation (such as checking that `name` is not empty) is handled
-    // upfront by React Hook Form via `{ required: 'Collection name is required' }`.
-    // We map the validated values to the database schema, with `poster_url`
-    // initialized to null (cover photos are uploaded via Task 7).
+    // Map form inputs to database fields; set poster_url to null initially.
     const payload: CollectionInsert = {
+      // Assign the validated collection name.
       name: data.name,
+      // Provide optional description or fallback to null.
       description: data.description || null,
+      // Provide optional start date or fallback to null.
       start_time: data.start_time || null,
+      // Provide optional end date or fallback to null.
       end_time: data.end_time || null,
+      // Initialize cover photo as null (managed via Task 7).
       poster_url: null,
     }
 
-    // --------------------------------------------------------------------------
-    // Step 2: Call the Next.js Server Action to insert into Supabase
-    // --------------------------------------------------------------------------
-    // `createNewCollection` runs securely on the server via Supabase client,
-    // inserting the record and returning the inserted row.
+    // Call server action createNewCollection to persist the collection row in Supabase.
     const res = await createNewCollection(payload)
+
+    // Check if the server returned an error during creation.
     if (res?.error) {
+      // Log server error details to the console for debugging.
       console.error('Failed to create collection in database:', res.error)
+      // Notify the user of the creation failure via toast notification.
       showNotification?.('Failed to create collection: ' + res.error)
+      // Throw error to interrupt execution and enter catch block.
       throw new Error(res.error)
     }
 
+    // Declare variable to hold the final created collection object.
     let createdCol: CollectionWithItems
 
-    // --------------------------------------------------------------------------
-    // Step 3: Construct the final CollectionWithItems object
-    // --------------------------------------------------------------------------
-    // If the server action succeeded and returned the persisted row:
+    // Check if the database record was returned successfully.
     if (res?.data) {
-      // Attach an empty `collection_items` array to satisfy the CollectionWithItems type
+      // Attach an empty items array to satisfy the CollectionWithItems type.
       createdCol = {
         ...res.data,
         collection_items: [],
       }
     } else {
-      // Fallback: If running offline or in demo mode without a configured DB,
-      // construct an optimistic mock object with a generated timestamp ID.
+      // Log warning when server returns no data (e.g., local mock or offline mode).
       console.warn('Server insertion did not return data. Generating client fallback:', res?.error)
+      // Construct fallback optimistic collection with a timestamp-based ID.
       createdCol = {
         id: 'col-' + Date.now(),
         name: payload.name ?? null,
@@ -119,20 +117,23 @@ export async function createCollection(
       }
     }
 
-    // --------------------------------------------------------------------------
-    // Step 4: Trigger success notification and notify parent components
-    // --------------------------------------------------------------------------
+    // Display a success toast notification to the user.
     showNotification?.('Collection created successfully!')
 
+    // Check if an onCreated callback was supplied by the caller.
     if (onCreated) {
+      // Invoke callback to pass the new collection to parent state.
       onCreated(createdCol)
     }
 
-    // Return the newly created collection to the caller
+    // Return the newly created collection object.
     return createdCol
   } catch (error) {
+    // Extract error message string or provide a fallback error text.
     const errorMsg = error instanceof Error ? error.message : 'Failed to create collection.'
+    // Show error notification toast with the failure reason.
     showNotification?.(errorMsg)
+    // Re-throw error so calling components can handle form state accordingly.
     throw error
   }
 }

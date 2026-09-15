@@ -20,6 +20,7 @@
  * - Task 6: `onSortChange` and `sortCollections` (CollectionToolbar.tsx, CollectionListSection.tsx)
  * - Task 7: `editCollectionPoster` (EditCollectionModal.tsx)
  * - Task 8: `editMemoryPoster` (EditMemoryItemModal.tsx, MemoryBookModal.tsx)
+ * - Color Management: `colorManagement` (Theme color configuration across UI)
  */
 
 export * from './task-1'
@@ -30,3 +31,4 @@ export * from './task-5'
 export * from './task-6'
 export * from './task-7'
 export * from './task-8'
+export * from './color-management'

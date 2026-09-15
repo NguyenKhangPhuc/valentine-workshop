@@ -67,55 +67,58 @@ export async function editMemory(
   showNotification?: (message: string) => void
 ): Promise<CollectionItem> {
   try {
-    // --------------------------------------------------------------------------
-    // Step 1: Assemble the partial update payload
-    // --------------------------------------------------------------------------
-    // Form validation (such as checking required name) is handled upfront by
-    // React Hook Form via `{ required: 'Memory name is required' }`.
-    // We map the validated inputs directly to our update payload.
+    // Assemble the partial update payload with item ID and edited fields.
     const payload = {
+      // Target the existing memory item ID to update.
       id: itemToEdit.id,
+      // Update memory name/title from validated form input.
       name: data.name,
+      // Update narrative description or set to null if empty.
       description: data.description || null,
+      // Update memory date or set to null if empty.
       memory_date: data.memory_date || null,
+      // Update book page display order index.
       order: data.order,
     }
 
-    // --------------------------------------------------------------------------
-    // Step 2: Call the Next.js Server Action to update the database
-    // --------------------------------------------------------------------------
-    // Invokes `updateCollectionItem` which runs an UPDATE SQL query in Supabase.
+    // Call server action updateCollectionItem to update the record in Supabase.
     const res = await updateCollectionItem(payload)
+
+    // Check if the update query returned an error or missing data.
     if (res?.error || !res?.data) {
+      // Derive error message from response or fallback text.
       const errorMsg = res?.error ?? 'Failed to update memory item in the database.'
+      // Log update failure to the console.
       console.error(errorMsg)
+      // Display toast notification alerting user to the failure.
       showNotification?.(errorMsg)
+      // Throw error to break execution into catch block.
       throw new Error(errorMsg)
     }
 
-    // --------------------------------------------------------------------------
-    // Step 3: Merge returned data with existing attributes
-    // --------------------------------------------------------------------------
-    // Ensure fields like `image_url` and `collection_id` are intact
+    // Merge updated fields while safeguarding existing image_url.
     const updatedItem: CollectionItem = {
       ...res.data,
-      image_url: res.data.image_url, // Safeguard existing image path
+      image_url: res.data.image_url,
     }
 
-    // --------------------------------------------------------------------------
-    // Step 4: Trigger success notification and notify parent listeners
-    // --------------------------------------------------------------------------
+    // Display success toast notification upon successful update.
     showNotification?.('Memory item updated successfully!')
 
+    // Check if an onSuccess callback was provided by parent component.
     if (onSuccess) {
+      // Notify parent component that item was updated (isEdit = true).
       onSuccess(updatedItem, true)
     }
 
-    // Return the updated memory record
+    // Return the updated memory item record.
     return updatedItem
   } catch (error) {
+    // Extract message from caught error object.
     const errorMsg = error instanceof Error ? error.message : 'Failed to update memory item.'
+    // Show error toast notification to the user.
     showNotification?.(errorMsg)
+    // Re-throw error so caller can handle form submission state.
     throw error
   }
 }
