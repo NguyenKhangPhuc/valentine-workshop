@@ -48,6 +48,14 @@ export async function editCollectionPoster(
   showNotification?: (message: string) => void
 ): Promise<CollectionWithItems> {
   try {
+    /**
+     * --------------------------------------------------------------------------
+     * Step 1: Validate target collection existence
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Verify that `collection` reference and `collection.id` are defined.
+     * - If invalid, trigger toast error notification and abort execution.
+     */
     // Check if target collection is valid and contains an ID.
     if (!collection || !collection.id) {
       // Define error message for missing collection reference.
@@ -58,6 +66,17 @@ export async function editCollectionPoster(
       throw new Error(errorMsg)
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 2: Handle Case A - File Upload / Replacement (when file is provided)
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Validate client-side image MIME types (PNG, JPG, WEBP).
+     * - Call Server Action `updateCollectionPoster(collection, file)` to upload to Supabase Storage.
+     * - Create an optimistic browser object URL (`URL.createObjectURL(file)`).
+     * - Assemble updated collection, trigger success toast, and invoke `onSuccess`.
+     * - Return updated collection object.
+     */
     // Check if user provided a file to upload or replace poster.
     if (file != null) {
       // Define supported image MIME types for client-side validation.
@@ -106,6 +125,17 @@ export async function editCollectionPoster(
       return updatedCollection
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 3: Handle Case B - File Removal / Deletion (when file is null)
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Invoke `updateCollectionPoster(collection, null)` to purge cloud asset and set DB column to null.
+     * - Assemble cleared collection with `poster_url: null`.
+     * - Trigger removal success toast notification via `showNotification`.
+     * - Notify parent state via `onSuccess` callback if provided.
+     * - Return cleared collection object.
+     */
     // Handle case when file is null: call server action to delete poster and set column null.
     const res = await updateCollectionPoster(collection, null)
     // Check if removal server action returned an error.

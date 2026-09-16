@@ -66,13 +66,23 @@ export async function createMemory(
   showNotification?: (message: string) => void
 ): Promise<CollectionItem> {
   try {
+    /**
+     * --------------------------------------------------------------------------
+     * Step 1: Assemble database insert payload
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Form validation (ensuring memory name is entered) is handled upfront by React Hook Form.
+     * - Bind the memory moment to its parent collection via `collection_id`.
+     * - Map form fields into `CollectionItemInsert`, defaulting `order` to 1.
+     * - Initialize `image_url` to `null` prior to optional media file upload.
+     */
     // Assemble the database payload linking this memory to its parent collection.
     const payload: CollectionItemInsert = {
       // Assign foreign key of the parent collection.
       collection_id: collectionId,
       // Assign the validated memory title/name.
       name: data.name,
-      // Assign optional description or fallback to null.
+      // Provide optional description or fallback to null.
       description: data.description || null,
       // Assign optional memory date or fallback to null.
       memory_date: data.memory_date || null,
@@ -82,6 +92,16 @@ export async function createMemory(
       image_url: null,
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 2: Insert memory record into Supabase
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Call Server Action `createNewCollectionItem(payload)` to insert into `collection_items` table.
+     * - Validate database response; if error or missing data, display toast notification,
+     *   log error, and throw Error.
+     * - Store newly created memory item with its generated ID.
+     */
     // Call server action createNewCollectionItem to insert the row in Supabase.
     const res = await createNewCollectionItem(payload)
 
@@ -97,6 +117,17 @@ export async function createMemory(
       throw new Error(errorMessage)
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 3: Upload optional image attachment, notify parent state, and trigger notification
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - If `posterFile` is provided, upload image to Supabase Storage via `updateCollectionItemPoster`.
+     * - Update local memory record representation with the saved storage path on success.
+     * - Display a success toast alert to user via `showNotification`.
+     * - Notify parent state via `onSuccess` callback if provided.
+     * - Return the completed `CollectionItem` record.
+     */
     // Store the newly created memory record returned from database.
     let newItem: CollectionItem = res.data
 

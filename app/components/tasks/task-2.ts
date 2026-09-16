@@ -68,6 +68,16 @@ export async function editCollection(
   showNotification?: (message: string) => void
 ): Promise<CollectionWithItems> {
   try {
+    /**
+     * --------------------------------------------------------------------------
+     * Step 1: Construct partial update payload
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Form validation (ensuring name is present) is handled upfront by React Hook Form.
+     * - Target the specific collection by its unique identifier (`collection.id`).
+     * - Map updated fields (`name`, `description`, `start_time`, `end_time`),
+     *   falling back empty fields to `null` to clear previous values in the database.
+     */
     // Construct the partial update payload with the collection ID and form inputs.
     const updatePayload = {
       // Specify the target collection primary key ID to update.
@@ -82,6 +92,15 @@ export async function editCollection(
       end_time: data.end_time || null,
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 2: Invoke Server Action to update collection in database
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Execute `updateCollection(updatePayload)` to run an UPDATE query in Supabase.
+     * - Inspect the server response; log error, display toast notification,
+     *   and throw an Error if the update failed.
+     */
     // Invoke server action updateCollection to update the collection row in Supabase.
     const res = await updateCollection(updatePayload)
 
@@ -95,6 +114,17 @@ export async function editCollection(
       throw new Error(res.error)
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 3: Merge updated fields, display success toast, and notify parent state
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Merge updated fields into the existing `collection` object to retain intact
+     *   relations (`poster_url`, `collection_items`).
+     * - Trigger a user-facing success notification via `showNotification`.
+     * - Invoke `onSuccess` callback with the merged collection if provided.
+     * - Return the updated `CollectionWithItems` record.
+     */
     // Merge updated fields with existing items and poster to preserve state.
     const updatedCollection: CollectionWithItems = {
       ...collection,

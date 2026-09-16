@@ -64,6 +64,16 @@ export async function createCollection(
   showNotification?: (message: string) => void
 ): Promise<CollectionWithItems> {
   try {
+    /**
+     * --------------------------------------------------------------------------
+     * Step 1: Map form inputs to database payload
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Form validation (ensuring name is present) is handled upfront by React Hook Form.
+     * - Map pre-validated form inputs to the `CollectionInsert` database schema.
+     * - Convert empty/undefined strings to `null` for clean database storage.
+     * - Initialize `poster_url` to `null` (cover photos are uploaded via Task 7).
+     */
     // Map form inputs to database fields; set poster_url to null initially.
     const payload: CollectionInsert = {
       // Assign the validated collection name.
@@ -78,6 +88,15 @@ export async function createCollection(
       poster_url: null,
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 2: Persist collection to Supabase via Server Action
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Invoke `createNewCollection(payload)` running securely on the server.
+     * - Check for server errors; log to console, trigger user toast notification,
+     *   and throw an Error to abort on failure.
+     */
     // Call server action createNewCollection to persist the collection row in Supabase.
     const res = await createNewCollection(payload)
 
@@ -91,6 +110,17 @@ export async function createCollection(
       throw new Error(res.error)
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 3: Construct collection object, trigger notifications, and notify parent state
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - If the database record succeeds, attach empty `collection_items: []` to satisfy `CollectionWithItems`.
+     * - If offline/demo mode without DB data, generate an optimistic fallback with a timestamp ID.
+     * - Display a success toast notification via `showNotification`.
+     * - Invoke the `onCreated` callback with the new collection if provided.
+     * - Return the created `CollectionWithItems` object to the caller.
+     */
     // Declare variable to hold the final created collection object.
     let createdCol: CollectionWithItems
 

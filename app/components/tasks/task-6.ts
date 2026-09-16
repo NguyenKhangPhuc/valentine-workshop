@@ -40,9 +40,23 @@ export function onSortChange(
   setSortBy: (sort: SortOption) => void,
   setCurrentPage: (page: number) => void
 ): void {
+  /**
+   * --------------------------------------------------------------------------
+   * Step 1: Update active sort criteria state
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - Invoke `setSortBy(newSort)` to notify React of the newly selected sorting mode.
+   */
   // Update state with the newly selected sorting option.
   setSortBy(newSort)
 
+  /**
+   * --------------------------------------------------------------------------
+   * Step 2: Reset pagination to initial page
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - Call `setCurrentPage(1)` to return view to page 1, preventing stranded empty pages.
+   */
   // Reset pagination back to page 1 to prevent empty pages on re-sort.
   setCurrentPage(1)
 }
@@ -63,6 +77,14 @@ export function sortCollections(
   collections: CollectionWithItems[],
   sortBy: SortOption
 ): CollectionWithItems[] {
+  /**
+   * --------------------------------------------------------------------------
+   * Step 1: Handle trivial cases and create immutable shallow copy
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - If `collections` has 1 or 0 elements, return it immediately to avoid overhead.
+   * - Create a shallow copy `[...collections]` to guarantee immutability and protect props.
+   */
   // Check if collections list has 1 or fewer items to skip sorting.
   if (!collections || collections.length <= 1) {
     // Return original array or empty array if null/undefined.
@@ -72,6 +94,19 @@ export function sortCollections(
   // Create shallow copy of array to maintain immutability and avoid mutating props.
   const sorted = [...collections]
 
+  /**
+   * --------------------------------------------------------------------------
+   * Step 2: Execute sorting comparator based on selected option
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - In-place sort the cloned array using `Array.prototype.sort`.
+   * - Branch across 8 sorting modes via `switch (sortBy)`:
+   *   * `created_at_desc` / `created_at_asc`: Numerical comparison on timestamp epochs.
+   *   * `name_asc` / `name_desc`: String locale comparison via `String.prototype.localeCompare`.
+   *   * `items_desc` / `items_asc`: Difference comparison on `collection_items.length`.
+   *   * `start_date_asc` / `start_date_desc`: Date comparisons with missing-date sink logic.
+   *   * `default`: Preserve original order (return 0).
+   */
   // Sort array in-place using comparator based on active sort option.
   sorted.sort((a, b) => {
     // Determine comparator logic corresponding to selected sortBy option.
@@ -166,6 +201,13 @@ export function sortCollections(
     }
   })
 
+  /**
+   * --------------------------------------------------------------------------
+   * Step 3: Return sorted collections array
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - Return the newly ordered array without modifying the source collection.
+   */
   // Return the newly sorted array of collections.
   return sorted
 }

@@ -38,12 +38,29 @@ export function searchByTitleOrDescription(
   collections: CollectionWithItems[],
   query: string
 ): CollectionWithItems[] {
+  /**
+   * --------------------------------------------------------------------------
+   * Step 1: Validate input and handle empty collections
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - Guard against empty, null, or undefined collection arrays.
+   * - Immediately return an empty array `[]` to avoid runtime evaluation errors.
+   */
   // Check if collection array is empty or undefined.
   if (!collections || collections.length === 0) {
     // Return an empty array immediately when no collections exist.
     return []
   }
 
+  /**
+   * --------------------------------------------------------------------------
+   * Step 2: Sanitize and normalize search query
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - Strip leading and trailing whitespace using `.trim()`.
+   * - Convert query string to lowercase for case-insensitive matching.
+   * - Fast-path exit: return the unfiltered `collections` array if query is empty.
+   */
   // Trim whitespace and convert query to lowercase for case-insensitive matching.
   const normalizedQuery = (query || '').trim().toLowerCase()
 
@@ -53,6 +70,16 @@ export function searchByTitleOrDescription(
     return collections
   }
 
+  /**
+   * --------------------------------------------------------------------------
+   * Step 3: Filter collections using case-insensitive substring matching
+   * --------------------------------------------------------------------------
+   * Specification:
+   * - Iterate across collection entries using `Array.prototype.filter`.
+   * - Check if `collection.name` contains `normalizedQuery`.
+   * - Check if `collection.description` contains `normalizedQuery`.
+   * - Return only collections satisfying at least one match condition.
+   */
   // Filter collections array based on matching title or description.
   return collections.filter((collection) => {
     // Check if collection name exists and contains search term.

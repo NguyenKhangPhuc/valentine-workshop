@@ -67,6 +67,16 @@ export async function editMemory(
   showNotification?: (message: string) => void
 ): Promise<CollectionItem> {
   try {
+    /**
+     * --------------------------------------------------------------------------
+     * Step 1: Assemble partial update payload
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Form validation (ensuring memory name is present) is handled upfront by React Hook Form.
+     * - Target the specific memory item via its identifier (`itemToEdit.id`).
+     * - Map updated fields (`name`, `description`, `memory_date`, `order`),
+     *   falling back empty fields to `null` to clear previous values in the database.
+     */
     // Assemble the partial update payload with item ID and edited fields.
     const payload = {
       // Target the existing memory item ID to update.
@@ -81,6 +91,15 @@ export async function editMemory(
       order: data.order,
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 2: Call Server Action to update database record
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Execute `updateCollectionItem(payload)` to run an UPDATE query in Supabase.
+     * - Verify update response; if error or missing data, display toast alert,
+     *   log error, and throw Error.
+     */
     // Call server action updateCollectionItem to update the record in Supabase.
     const res = await updateCollectionItem(payload)
 
@@ -96,6 +115,16 @@ export async function editMemory(
       throw new Error(errorMsg)
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 3: Merge returned data, display success toast, and notify parent state
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Safeguard existing `image_url` while merging returned data into updated memory item.
+     * - Display a success toast notification via `showNotification`.
+     * - Invoke `onSuccess(updatedItem, true)` callback to notify parent components of edit.
+     * - Return the updated `CollectionItem` record.
+     */
     // Merge updated fields while safeguarding existing image_url.
     const updatedItem: CollectionItem = {
       ...res.data,

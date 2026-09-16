@@ -51,6 +51,14 @@ export async function editMemoryPoster(
   showNotification?: (message: string) => void
 ): Promise<CollectionItem> {
   try {
+    /**
+     * --------------------------------------------------------------------------
+     * Step 1: Validate target memory item existence
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Verify that `item` reference and `item.id` are defined.
+     * - If missing, display a toast notification and throw Error to abort.
+     */
     // Check if target memory item is valid and has an ID.
     if (!item || !item.id) {
       // Define error message for missing item reference.
@@ -61,6 +69,17 @@ export async function editMemoryPoster(
       throw new Error(errorMsg)
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 2: Handle Case A - Photo Upload / Replacement (when file is provided)
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Validate client-side image MIME types (PNG, JPG, WEBP).
+     * - Call Server Action `updateCollectionItemPoster(item, file)` to upload file.
+     * - Generate optimistic browser object URL (`URL.createObjectURL(file)`).
+     * - Trigger success toast and invoke `onSuccess(updatedItem, true)`.
+     * - Return the updated `CollectionItem` record.
+     */
     // Check if user provided an image file to upload or replace photo.
     if (file != null) {
       // Define supported image MIME types for client-side validation.
@@ -109,6 +128,17 @@ export async function editMemoryPoster(
       return updatedItem
     }
 
+    /**
+     * --------------------------------------------------------------------------
+     * Step 3: Handle Case B - Photo Removal / Deletion (when file is null)
+     * --------------------------------------------------------------------------
+     * Specification:
+     * - Invoke `updateCollectionItemPoster(item, null)` to purge cloud file and set DB column to null.
+     * - Assemble cleared memory item with `image_url: null`.
+     * - Trigger photo removal success toast notification via `showNotification`.
+     * - Notify parent state via `onSuccess(clearedItem, false)` callback if provided.
+     * - Return cleared `CollectionItem` record.
+     */
     // Handle case when file is null: call server action to delete photo from storage.
     const res = await updateCollectionItemPoster(item, null)
     // Check if removal server action returned an error.
