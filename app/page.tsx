@@ -3,6 +3,7 @@ import { Navbar } from "./components/Navbar";
 import { HeroSection } from "./components/HeroSection";
 import { CollectionListSection } from "./components/CollectionListSection";
 import { CollectionWithItems } from "./types/collection";
+import { colorManagement } from "./components/tasks/color-management";
 
 export default async function Home() {
   const { data, error } = await getAllCollectionsWithCollectionItems();
@@ -13,7 +14,13 @@ export default async function Home() {
 
   // Cast data safely to CollectionWithItems array
   return (
-    <main className="min-h-screen bg-white text-[#1f0c33] flex flex-col font-sans selection:bg-[#b63add] selection:text-white">
+    <main
+      className="min-h-screen flex flex-col font-sans selection:bg-[#b63add] selection:text-white"
+      style={{
+        backgroundColor: colorManagement.homePage.pageBackground,
+        color: colorManagement.homePage.textColor,
+      }}
+    >
       {/* Fixed Centered Navigation Bar */}
       <Navbar />
 

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
 import { handleGetUrl } from '../helpers/file_url'
 import { createClient } from '../utils/supabase/client'
+import { colorManagement } from './tasks/color-management'
 
 interface CollectionCardProps {
   collection: CollectionWithItems
@@ -15,6 +16,8 @@ interface CollectionCardProps {
 
 export function CollectionCard({ collection, onView, onEdit, onDelete }: CollectionCardProps) {
   const [imageError, setImageError] = useState(false)
+  const [isCardHovered, setIsCardHovered] = useState(false)
+  const [hoveredButton, setHoveredButton] = useState<'view' | 'edit' | 'delete' | null>(null)
 
   const imageUrl = useMemo(() => {
     if (!collection.poster_url || collection.poster_url.trim() === '') {
@@ -65,7 +68,18 @@ export function CollectionCard({ collection, onView, onEdit, onDelete }: Collect
   return (
     <motion.div
       whileHover={{ y: -6, transition: { duration: 0.2, ease: 'easeOut' as const } }}
-      className="group relative bg-white border border-[#e9dcf5] hover:border-[#b63add] rounded-2xl overflow-hidden flex flex-col h-[460px] shadow-sm hover:shadow-xl hover:shadow-[#b63add]/10 transition-all"
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => setIsCardHovered(false)}
+      className="group relative rounded-2xl overflow-hidden flex flex-col h-[460px] border transition-all"
+      style={{
+        backgroundColor: colorManagement.collectionCard.backgroundColor,
+        borderColor: isCardHovered
+          ? colorManagement.collectionCard.hoverBorderColor
+          : colorManagement.collectionCard.borderColor,
+        boxShadow: isCardHovered
+          ? colorManagement.collectionCard.hoverShadowColor
+          : '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+      }}
     >
       {/* Poster Image Container or Placeholder */}
       <div className="relative w-full h-48 bg-[#fcfbfe] overflow-hidden shrink-0">
@@ -93,7 +107,14 @@ export function CollectionCard({ collection, onView, onEdit, onDelete }: Collect
         )}
 
         {/* Item count badge */}
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md border border-[#e9dcf5] px-3 py-1 rounded-full text-xs font-semibold text-[#b63add] shadow-xs">
+        <div
+          className="absolute top-3 right-3 backdrop-blur-md border px-3 py-1 rounded-full text-xs font-semibold shadow-xs"
+          style={{
+            color: colorManagement.collectionCard.badgeColor,
+            backgroundColor: colorManagement.collectionCard.badgeBackgroundColor,
+            borderColor: colorManagement.collectionCard.borderColor,
+          }}
+        >
           {itemsCount} {itemsCount === 1 ? 'Memory' : 'Memories'}
         </div>
       </div>
@@ -103,20 +124,33 @@ export function CollectionCard({ collection, onView, onEdit, onDelete }: Collect
         <div className="flex-1 flex flex-col">
           {/* Collection Title */}
           <h4
-            className="text-lg font-bold text-[#1f0c33] group-hover:text-[#b63add] transition-colors line-clamp-1 mb-1.5"
+            className="text-lg font-bold transition-colors line-clamp-1 mb-1.5"
+            style={{
+              color: isCardHovered
+                ? colorManagement.collectionCard.hoverTitleColor
+                : colorManagement.collectionCard.titleColor,
+            }}
             title={collection.name || 'Untitled Collection'}
           >
             {collection.name || 'Untitled Collection'}
           </h4>
 
           {/* Description */}
-          <p className="text-xs text-[#624d78] line-clamp-2 mb-4 leading-relaxed min-h-[2.5rem]">
+          <p
+            className="text-xs line-clamp-2 mb-4 leading-relaxed min-h-[2.5rem]"
+            style={{
+              color: colorManagement.collectionCard.descriptionColor,
+            }}
+          >
             {collection.description || 'No description provided for this collection.'}
           </p>
 
           {/* Timeframe & Meta */}
           <div className="space-y-1.5 text-xs text-[#624d78] border-t border-[#f0e6fa] pt-3 mt-auto">
-            <div className="flex items-center gap-1.5 text-[#b63add] font-medium min-h-[1.25rem]">
+            <div
+              className="flex items-center gap-1.5 font-medium min-h-[1.25rem]"
+              style={{ color: colorManagement.collectionCard.badgeColor }}
+            >
               {(startDateFormatted || endDateFormatted) ? (
                 <>
                   <span>Date:</span>
@@ -146,7 +180,20 @@ export function CollectionCard({ collection, onView, onEdit, onDelete }: Collect
           <button
             type="button"
             onClick={() => onView?.(collection)}
-            className="py-1.5 px-2 bg-[#b63add]/10 hover:bg-[#b63add] border border-[#b63add]/20 hover:border-[#b63add] text-[#b63add] hover:text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            onMouseEnter={() => setHoveredButton('view')}
+            onMouseLeave={() => setHoveredButton(null)}
+            className="py-1.5 px-2 border text-xs font-semibold rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            style={{
+              backgroundColor: hoveredButton === 'view'
+                ? colorManagement.collectionButtons.view.hoverBackgroundColor
+                : colorManagement.collectionButtons.view.backgroundColor,
+              borderColor: hoveredButton === 'view'
+                ? colorManagement.collectionButtons.view.hoverBorderColor
+                : colorManagement.collectionButtons.view.borderColor,
+              color: hoveredButton === 'view'
+                ? colorManagement.collectionButtons.view.hoverTextColor
+                : colorManagement.collectionButtons.view.textColor,
+            }}
           >
             View
           </button>
@@ -154,7 +201,18 @@ export function CollectionCard({ collection, onView, onEdit, onDelete }: Collect
           <button
             type="button"
             onClick={() => onEdit?.(collection)}
-            className="py-1.5 px-2 bg-[#fcfbfe] hover:bg-[#f4e6fc] border border-[#e9dcf5] text-[#5c4775] hover:text-[#b63add] text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            onMouseEnter={() => setHoveredButton('edit')}
+            onMouseLeave={() => setHoveredButton(null)}
+            className="py-1.5 px-2 border text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            style={{
+              backgroundColor: hoveredButton === 'edit'
+                ? colorManagement.collectionButtons.edit.hoverBackgroundColor
+                : colorManagement.collectionButtons.edit.backgroundColor,
+              borderColor: colorManagement.collectionButtons.edit.borderColor,
+              color: hoveredButton === 'edit'
+                ? colorManagement.collectionButtons.edit.hoverTextColor
+                : colorManagement.collectionButtons.edit.textColor,
+            }}
           >
             Edit
           </button>
@@ -162,7 +220,18 @@ export function CollectionCard({ collection, onView, onEdit, onDelete }: Collect
           <button
             type="button"
             onClick={() => onDelete?.(collection.id)}
-            className="py-1.5 px-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            onMouseEnter={() => setHoveredButton('delete')}
+            onMouseLeave={() => setHoveredButton(null)}
+            className="py-1.5 px-2 border text-xs font-medium rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+            style={{
+              backgroundColor: hoveredButton === 'delete'
+                ? colorManagement.collectionButtons.delete.hoverBackgroundColor
+                : colorManagement.collectionButtons.delete.backgroundColor,
+              borderColor: colorManagement.collectionButtons.delete.borderColor,
+              color: hoveredButton === 'delete'
+                ? colorManagement.collectionButtons.delete.hoverTextColor
+                : colorManagement.collectionButtons.delete.textColor,
+            }}
           >
             Delete
           </button>

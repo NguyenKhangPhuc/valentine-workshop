@@ -4,7 +4,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollectionItem } from '../types/collection_item'
-import { createNewCollectionItem, updateCollectionItem, updateCollectionItemPoster } from '../actions/collection_items'
+import { editMemory } from './tasks/task-4'
+import { editMemoryPoster } from './tasks/task-8'
+import { useNotification } from '../context/NotificationContext'
 import { handleGetUrl } from '../helpers/file_url'
 import { createClient } from '../utils/supabase/client'
 
@@ -49,6 +51,7 @@ export function EditMemoryItemModal({
   itemToEdit,
   onSuccess,
 }: MemoryItemFormModalProps) {
+  const { showNotification } = useNotification()
   const isEditing = !!itemToEdit
 
   const initialResolvedUrl = useMemo(() => {
@@ -138,19 +141,14 @@ export function EditMemoryItemModal({
 
   const handleDeleteImage = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    setSelectedUrl(null)
+    setSelectedFile(null)
 
     try {
-      updateCollectionItemPoster(itemToEdit, null)
-      setSelectedUrl(null)
-      setSelectedFile(null)
-      const updatedPayload = {
-        ...itemToEdit, image_url: null
-      }
-      onSuccess(updatedPayload, false)
+      await editMemoryPoster(itemToEdit, null, (updated) => onSuccess(updated, false), showNotification)
     } catch (error) {
-      console.log(error)
+      console.error('Failed to remove image:', error)
     }
-
   }
 
   const handleFileChange = async (file: File): Promise<void> => {
@@ -159,41 +157,17 @@ export function EditMemoryItemModal({
     setSelectedUrl(url)
 
     try {
-      const { error } = await updateCollectionItemPoster(itemToEdit, file)
-      if (error) {
-        throw new Error(error)
-      }
-      const updatedPayload = {
-        ...itemToEdit, image_url: url
-      }
-      onSuccess(updatedPayload, true)
-      // showNotification("Update image successfully")
+      await editMemoryPoster(itemToEdit, file, (updated) => onSuccess(updated, false), showNotification)
     } catch (error) {
-      if (error instanceof Error) {
-        // showNotification(error.message)
-      } else {
-        // showNotification("Failed to update poster image.")
-      }
-    } finally {
-      // setIsOpenLoader(false)
+      console.error('Failed to update poster image:', error)
     }
   }
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      const payload = {
-        id: itemToEdit.id,
-        name: data.name,
-        description: data.description,
-        memory_date: data.memory_date || null,
-        order: data.order
-      }
-      const res = await updateCollectionItem(payload)
-      if (res.data) {
-        onSuccess(res.data, true)
-        reset()
-        onClose()
-      }
+      await editMemory(itemToEdit, data, onSuccess, showNotification)
+      reset()
+      onClose()
     } catch (err) {
       console.error('Failed to save memory item:', err)
     }

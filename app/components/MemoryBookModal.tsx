@@ -9,7 +9,9 @@ import { handleGetUrl } from '../helpers/file_url'
 import { createClient } from '../utils/supabase/client'
 import { CreateMemoryItemModal } from './CreateMemoryItemModal'
 import { EditMemoryItemModal } from './EditMemoryItemModal'
-import { deleteCollectionItem, updateCollectionItem, updateCollectionItemPoster } from '../actions/collection_items'
+import { deleteCollectionItem } from '../actions/collection_items'
+import { editMemoryPoster } from './tasks/task-8'
+import { useNotification } from '../context/NotificationContext'
 
 // Dynamically import HTMLFlipBook to disable SSR
 const HTMLFlipBook = dynamic(() => import('react-pageflip'), { ssr: false }) as any
@@ -73,6 +75,7 @@ function ItemPageContent({
   onDeleteItem: (itemId: string) => void
   onImageChanged: (itemId: string, newImageUrl: string | null) => void
 }) {
+  const { showNotification } = useNotification()
   const serverResolvedUrl = useMemo(() => {
     return resolveImageUrl(item.image_url)
   }, [item.image_url])
@@ -165,43 +168,38 @@ function ItemPageContent({
 
   const handleFileChange = async (file: File): Promise<void> => {
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setLocalImageUrl(url)
 
     try {
-      const { error } = await updateCollectionItemPoster(item, file)
-      if (error) {
-        throw new Error(error)
-      }
-      const updatedPayload = {
-        ...item, poster_url: url
-      }
-      onImageChanged(updatedPayload.id, url)
-      // showNotification("Update image successfully")
+      await editMemoryPoster(
+        item,
+        file,
+        (updated) => {
+          setLocalImageUrl(updated.image_url)
+          onImageChanged(updated.id, updated.image_url)
+        },
+        showNotification
+      )
     } catch (error) {
-      if (error instanceof Error) {
-        // showNotification(error.message)
-      } else {
-        // showNotification("Failed to update poster image.")
-      }
-    } finally {
-      // setIsOpenLoader(false)
+      console.error('Failed to update image:', error)
     }
   }
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
+  const handleRemoveImage = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
     try {
-      updateCollectionItem({
-        id: item.id,
-        image_url: null,
-      })
-      setLocalImageUrl(null)
-      onImageChanged(item.id, null)
+      await editMemoryPoster(
+        item,
+        null,
+        (updated) => {
+          setLocalImageUrl(null)
+          onImageChanged(updated.id, null)
+        },
+        showNotification
+      )
     } catch (error) {
-      console.log("Failed to update the image")
+      console.error('Failed to remove image:', error)
     }
   }
 

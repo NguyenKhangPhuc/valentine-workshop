@@ -4,7 +4,8 @@ import React from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
-import { createNewCollection } from '../actions/collection'
+import { createCollection } from './tasks/task-1'
+import { useNotification } from '../context/NotificationContext'
 
 interface CreateCollectionModalProps {
   isOpen: boolean
@@ -17,10 +18,10 @@ interface FormInputs {
   description: string
   start_time: string
   end_time: string
-  poster_url: string
 }
 
 export function CreateCollectionModal({ isOpen, onClose, onCreated }: CreateCollectionModalProps) {
+  const { showNotification } = useNotification()
   const {
     register,
     handleSubmit,
@@ -32,41 +33,12 @@ export function CreateCollectionModal({ isOpen, onClose, onCreated }: CreateColl
       description: '',
       start_time: '',
       end_time: '',
-      poster_url: '',
     },
   })
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      const payload = {
-        name: data.name,
-        description: data.description || null,
-        start_time: data.start_time || null,
-        end_time: data.end_time || null,
-        poster_url: data.poster_url || null,
-      }
-
-      const res = await createNewCollection(payload)
-      let createdCol: CollectionWithItems
-
-      if (res?.data) {
-        createdCol = {
-          ...res.data,
-          collection_items: [],
-        }
-      } else {
-        createdCol = {
-          id: 'col-' + Date.now(),
-          name: payload.name,
-          description: payload.description,
-          start_time: payload.start_time,
-          end_time: payload.end_time,
-          poster_url: payload.poster_url,
-          created_at: new Date().toISOString(),
-          collection_items: [],
-        }
-      }
-      onCreated?.(createdCol)
+      await createCollection(data, onCreated, showNotification)
       reset()
       onClose()
     } catch (err) {
@@ -162,18 +134,7 @@ export function CreateCollectionModal({ isOpen, onClose, onCreated }: CreateColl
                 </div>
               </div>
 
-              {/* Poster URL */}
-              <div>
-                <label className="block text-xs font-semibold text-[#5c4775] uppercase tracking-wider mb-1.5">
-                  Poster Image Path / URL
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. posters/memory_trip.jpg"
-                  {...register('poster_url')}
-                  className="w-full bg-[#fcfbfe] border border-[#e9dcf5] focus:border-[#b63add] focus:ring-1 focus:ring-[#b63add] rounded-xl px-4 py-2.5 text-sm text-[#1f0c33] placeholder-gray-400 outline-none transition-all"
-                />
-              </div>
+
 
               {/* Modal Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#e9dcf5]">

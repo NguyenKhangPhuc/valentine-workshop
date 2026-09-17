@@ -3,8 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CollectionItem, CollectionItemInsert } from '../types/collection_item'
-import { createNewCollectionItem, updateCollectionItemPoster } from '../actions/collection_items'
+import { CollectionItem } from '../types/collection_item'
+import { createMemory } from './tasks/task-3'
+import { useNotification } from '../context/NotificationContext'
 
 interface CreateMemoryItemModalProps {
   isOpen: boolean
@@ -26,6 +27,7 @@ export function CreateMemoryItemModal({
   collectionId,
   onSuccess,
 }: CreateMemoryItemModalProps) {
+  const { showNotification } = useNotification()
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -89,26 +91,7 @@ export function CreateMemoryItemModal({
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      const payload: CollectionItemInsert = {
-        collection_id: collectionId,
-        name: data.name,
-        description: data.description || null,
-        memory_date: data.memory_date || null,
-        order: data.order ?? null,
-        image_url: null,
-      }
-      const res = await createNewCollectionItem(payload)
-      if (res?.error || !res?.data) { alert(res?.error ?? 'Failed to create'); return }
-
-      let newItem: CollectionItem = res.data
-      if (selectedFile) {
-        const resPoster = await updateCollectionItemPoster(newItem, selectedFile)
-        if (resPoster?.data && !resPoster.error) {
-          newItem = { ...newItem, image_url: resPoster.data ?? null }
-        }
-      }
-
-      onSuccess(newItem)
+      await createMemory(collectionId, data, selectedFile, onSuccess, showNotification)
       reset()
       onClose()
     } catch (err) {

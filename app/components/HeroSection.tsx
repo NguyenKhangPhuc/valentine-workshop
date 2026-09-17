@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
+import { colorManagement } from './tasks/color-management'
 
 interface Heart {
   x: number
@@ -109,7 +110,7 @@ export function HeroSection() {
         ctx.globalAlpha = heart.opacity
         ctx.translate(wobbleX, heart.y)
         ctx.rotate(heart.rotation)
-        ctx.fillStyle = '#ffffff'
+        ctx.fillStyle = colorManagement.fallingHearts.heartColor
         drawHeart(ctx, 0, 0, heart.size)
         ctx.fill()
         ctx.restore()
@@ -135,7 +136,7 @@ export function HeroSection() {
       id="home"
       ref={heroRef}
       className="relative w-full h-screen overflow-hidden flex items-center justify-center"
-      style={{ background: 'linear-gradient(160deg, #c040ef 0%, #b63add 40%, #8b22b3 100%)' }}
+      style={{ background: colorManagement.homePage.heroBackgroundGradient }}
     >
       {/* Falling Hearts Canvas */}
       <canvas
@@ -143,8 +144,13 @@ export function HeroSection() {
         className="absolute inset-0 w-full h-full z-0 pointer-events-none"
       />
 
-      {/* Bottom gradient fade into white background */}
-      <div className="absolute inset-x-0 bottom-0 h-40 z-10 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+      {/* Bottom gradient fade into page background */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-40 z-10 pointer-events-none"
+        style={{
+          background: `linear-gradient(to top, ${colorManagement.homePage.pageBackground}, transparent)`,
+        }}
+      />
 
       {/* Hero Content */}
       <motion.div
@@ -159,8 +165,11 @@ export function HeroSection() {
           className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none mb-10 text-white drop-shadow-2xl"
         >
           Memory<span
-            className="inline-block ml-1 px-3 py-1 rounded-xl text-[#b63add]"
-            style={{ background: 'rgba(255,255,255,0.97)' }}
+            className="inline-block ml-1 px-3 py-1 rounded-xl"
+            style={{
+              color: colorManagement.homePage.titleBadgeTextColor,
+              background: colorManagement.homePage.titleBadgeBackgroundColor,
+            }}
           >Book</span>
         </motion.h1>
 
@@ -172,8 +181,11 @@ export function HeroSection() {
         >
           <a
             href="#collections"
-            className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl text-[#b63add] font-bold text-base transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl"
-            style={{ background: 'rgba(255,255,255,0.97)' }}
+            className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl"
+            style={{
+              color: colorManagement.homePage.exploreButtonTextColor,
+              background: colorManagement.homePage.exploreButtonBackgroundColor,
+            }}
           >
             <span>Explore Collections</span>
             <span className="group-hover:translate-x-1 transition-transform">→</span>

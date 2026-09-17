@@ -4,7 +4,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollectionWithItems } from '../types/collection'
-import { updateCollection, updateCollectionPoster } from '../actions/collection'
+import { editCollection } from './tasks/task-2'
+import { editCollectionPoster } from './tasks/task-7'
+import { useNotification } from '../context/NotificationContext'
 import { handleGetUrl } from '../helpers/file_url'
 import { createClient } from '../utils/supabase/client'
 
@@ -51,6 +53,7 @@ export function EditCollectionModal({
     return resolveImageUrl(collection?.poster_url || null)
   }, [collection?.poster_url])
 
+  const { showNotification } = useNotification()
   const [selectedUrl, setSelectedUrl] = useState<string | null>(initialResolvedUrl)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -135,7 +138,7 @@ export function EditCollectionModal({
     setSelectedFile(null)
 
     if (collection) {
-      updateCollectionPoster(collection, null).catch((err) =>
+      await editCollectionPoster(collection, null, onSuccess, showNotification).catch((err) =>
         console.error('Failed to delete poster:', err)
       )
     }
@@ -147,48 +150,16 @@ export function EditCollectionModal({
     setSelectedUrl(url)
 
     try {
-      const { error } = await updateCollectionPoster(collection, file)
-      if (error) {
-        throw new Error(error)
-      }
-      const updatedPayload = {
-        ...collection, poster_url: url
-      }
-      onSuccess(updatedPayload)
-      // showNotification("Update image successfully")
+      await editCollectionPoster(collection, file, onSuccess, showNotification)
     } catch (error) {
-      if (error instanceof Error) {
-        // showNotification(error.message)
-      } else {
-        // showNotification("Failed to update poster image.")
-      }
-    } finally {
-      // setIsOpenLoader(false)
+      console.error('Failed to update poster image:', error)
     }
   }
-
-
 
   const onSubmit = async (data: FormInputs) => {
     if (!collection) return
     try {
-
-
-      const updatePayload = {
-        id: collection.id,
-        name: data.name,
-        description: data.description || null,
-        start_time: data.start_time || null,
-        end_time: data.end_time || null,
-      }
-
-      const res = await updateCollection(updatePayload)
-      const updatedCollection: CollectionWithItems = {
-        ...collection,
-        ...updatePayload,
-      }
-
-      onSuccess(updatedCollection)
+      await editCollection(collection, data, onSuccess, showNotification)
       onClose()
     } catch (err) {
       console.error('Failed to update collection:', err)
