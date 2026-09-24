@@ -17,6 +17,9 @@
  * - `app/components/Navbar.tsx`: Floating navigation bar container and menu links.
  * - `app/components/CollectionListSection.tsx`: "Create Collection" button and section header.
  * - `app/components/CollectionCard.tsx`: Collection cards, borders, and View/Edit/Delete buttons.
+ * - `app/components/MemoryBookModal.tsx`: Memory book modal chrome, navigation, book pages, and memory item content.
+ * - `app/components/CreateMemoryItemModal.tsx`: Create memory item modal form, inputs, dropzone, and buttons.
+ * - `app/components/EditMemoryItemModal.tsx`: Edit memory item modal form, inputs, dropzone, and buttons.
  */
 
 export const colorManagement = {
@@ -203,6 +206,251 @@ export const colorManagement = {
 
       // Sets the text color of the "Delete" button on hover.
       hoverTextColor: '#be123c',
+    },
+  },
+
+  // --------------------------------------------------------------------------
+  // Memory Book Modal & Outer Shell Colors
+  // --------------------------------------------------------------------------
+  memoryBookModal: {
+    // Sets the darkened backdrop color behind the flipbook modal.
+    backdropBackground: 'rgba(0, 0, 0, 0.85)',
+
+    // Sets the ambient glowing horizontal gradient behind the flipbook container.
+    glowGradient: 'linear-gradient(to right, rgba(32, 0, 42, 0.3), transparent, rgba(182, 58, 221, 0.3))',
+
+    // Top toolbar chrome colors
+    header: {
+      // Sets the text color of the "Memory Book" small uppercase label.
+      categoryColor: '#b63add',
+
+      // Sets the collection title text color in the modal header.
+      titleColor: '#ffffff',
+
+      // "+ Create Memory" top action button
+      createButton: {
+        backgroundColor: '#b63add',
+        hoverBackgroundColor: '#9c28bd',
+        textColor: '#ffffff',
+        shadowColor: '0 10px 15px -3px rgba(182, 58, 221, 0.3)',
+      },
+
+      // Modal close button ('✕')
+      closeButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        hoverBackgroundColor: 'rgba(255, 255, 255, 0.2)',
+        textColor: '#ffffff',
+      },
+    },
+
+    // Bottom navigation controls & page number indicator
+    navigation: {
+      prevButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        hoverBackgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        textColor: '#ffffff',
+      },
+      nextButton: {
+        backgroundColor: '#b63add',
+        hoverBackgroundColor: '#9c28bd',
+        textColor: '#ffffff',
+        shadowColor: '0 10px 15px -3px rgba(182, 58, 221, 0.3)',
+      },
+      pageInput: {
+        containerBg: 'rgba(255, 255, 255, 0.1)',
+        containerBorder: 'rgba(255, 255, 255, 0.2)',
+        labelColor: '#d1d5db',
+        inputBg: 'rgba(255, 255, 255, 0.2)',
+        inputBorder: 'rgba(255, 255, 255, 0.3)',
+        inputFocusBorder: '#b63add',
+        inputTextColor: '#ffffff',
+      },
+    },
+  },
+
+  // --------------------------------------------------------------------------
+  // Memory Book Pages & Content Theme Colors
+  // --------------------------------------------------------------------------
+  memoryBookPage: {
+    // Base book page layout wrapper
+    base: {
+      backgroundColor: '#ffffff',
+      borderColor: '#e9dcf5',
+      shadowColor: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+    },
+
+    // Front Cover page colors
+    frontCover: {
+      backgroundGradient: 'linear-gradient(to bottom right, #b63add, #8b22b3)',
+      borderColor: 'rgba(255, 255, 255, 0.2)',
+      dividerColor: 'rgba(255, 255, 255, 0.2)',
+      badgeColor: 'rgba(255, 255, 255, 0.8)',
+      posterBorderColor: 'rgba(255, 255, 255, 0.3)',
+      titleColor: '#ffffff',
+      descriptionColor: 'rgba(255, 255, 255, 0.8)',
+      promptColor: 'rgba(255, 255, 255, 0.9)',
+    },
+
+    // Back Cover page colors
+    backCover: {
+      backgroundColor: '#1f0c33',
+      borderColor: 'rgba(182, 58, 221, 0.3)',
+      dividerColor: 'rgba(255, 255, 255, 0.1)',
+      badgeColor: '#b63add',
+      titleColor: '#ffffff',
+      subtitleColor: 'rgba(245, 220, 253, 0.9)',
+      footerColor: '#9ca3af',
+    },
+
+    // Companion and empty placeholder pages
+    companionPage: {
+      backgroundColor: '#fcfbfe',
+      cardBackgroundColor: 'rgba(255, 255, 255, 0.7)',
+      borderColor: '#e9dcf5',
+      pageLabelColor: '#9681ab',
+      badgeColor: '#b63add',
+      iconBoxBg: '#faf0fe',
+      iconBoxBorder: '#e9dcf5',
+      iconColor: '#b63add',
+      titleColor: '#1f0c33',
+      descriptionColor: '#624d78',
+      button: {
+        backgroundColor: '#b63add',
+        hoverBackgroundColor: '#9c28bd',
+        textColor: '#ffffff',
+        shadowColor: '0 4px 6px -1px rgba(182, 58, 221, 0.25)',
+      },
+      footerTextColor: '#9681ab',
+    },
+
+    // Memory Item page inside the book
+    itemPage: {
+      toolbar: {
+        borderColor: '#e9dcf5',
+        badgeColor: '#b63add',
+        editButton: {
+          backgroundColor: 'rgba(182, 58, 221, 0.1)',
+          hoverBackgroundColor: '#b63add',
+          textColor: '#b63add',
+          hoverTextColor: '#ffffff',
+        },
+        deleteButton: {
+          backgroundColor: '#fff1f2',
+          hoverBackgroundColor: '#e11d48',
+          textColor: '#e11d48',
+          hoverTextColor: '#ffffff',
+        },
+      },
+      dropzone: {
+        borderColor: 'rgba(182, 58, 221, 0.4)',
+        hoverBorderColor: '#b63add',
+        draggingBorderColor: '#b63add',
+        backgroundColor: '#fcfbfe',
+        hoverBackgroundColor: 'rgba(244, 230, 252, 0.2)',
+        draggingBackgroundColor: 'rgba(244, 230, 252, 0.6)',
+        plusBg: '#f4e6fc',
+        plusColor: '#b63add',
+        textColor: '#b63add',
+        subtextColor: '#9681ab',
+      },
+      preview: {
+        overlayBackground: 'rgba(0, 0, 0, 0.4)',
+        removeButton: {
+          backgroundColor: '#ffffff',
+          hoverBackgroundColor: '#fff1f2',
+          textColor: '#e11d48',
+        },
+        changeButton: {
+          backgroundColor: '#b63add',
+          hoverBackgroundColor: '#9c28bd',
+          textColor: '#ffffff',
+        },
+      },
+      content: {
+        titleColor: '#1f0c33',
+        dateColor: '#b63add',
+        descriptionColor: '#624d78',
+        scrollbarTrack: '#faf0fe',
+        scrollbarThumb: 'rgba(182, 58, 221, 0.35)',
+        scrollbarThumbHover: '#b63add',
+      },
+      footer: {
+        borderColor: '#f0e6fa',
+        orderBadgeBg: '#f4e6fc',
+        orderBadgeText: '#b63add',
+        pageNumberColor: '#9681ab',
+      },
+    },
+  },
+
+  // --------------------------------------------------------------------------
+  // Memory Item Dialogs (Create & Edit Modals)
+  // --------------------------------------------------------------------------
+  memoryItemModal: {
+    backdropBackground: 'rgba(0, 0, 0, 0.6)',
+    dialog: {
+      backgroundColor: '#ffffff',
+      borderColor: '#e9dcf5',
+      textColor: '#1f0c33',
+    },
+    header: {
+      titleColor: '#1f0c33',
+      dividerColor: '#e9dcf5',
+      closeButton: {
+        backgroundColor: '#f3f4f6',
+        hoverBackgroundColor: '#e5e7eb',
+        textColor: '#6b7280',
+        hoverTextColor: '#1f2937',
+      },
+    },
+    form: {
+      labelColor: '#5c4775',
+      requiredColor: '#b63add',
+      inputBackground: '#fcfbfe',
+      inputBorderColor: '#e9dcf5',
+      inputTextColor: '#1f0c33',
+      inputFocusBorderColor: '#b63add',
+      errorColor: '#f43f5e',
+    },
+    dropzone: {
+      borderColor: 'rgba(182, 58, 221, 0.4)',
+      hoverBorderColor: '#b63add',
+      draggingBorderColor: '#b63add',
+      backgroundColor: '#fcfbfe',
+      hoverBackgroundColor: 'rgba(244, 230, 252, 0.2)',
+      draggingBackgroundColor: 'rgba(244, 230, 252, 0.6)',
+      plusBg: '#f4e6fc',
+      plusColor: '#b63add',
+      textColor: '#b63add',
+      subtextColor: '#9681ab',
+    },
+    preview: {
+      borderColor: '#e9dcf5',
+      deleteButton: {
+        backgroundColor: '#e11d48',
+        hoverBackgroundColor: '#be123c',
+        textColor: '#ffffff',
+      },
+      overlayBackground: 'rgba(0, 0, 0, 0.3)',
+      changeButton: {
+        backgroundColor: '#ffffff',
+        textColor: '#b63add',
+      },
+    },
+    footer: {
+      dividerColor: '#e9dcf5',
+      cancelButton: {
+        borderColor: '#e9dcf5',
+        hoverBackgroundColor: '#f9fafb',
+        textColor: '#5c4775',
+      },
+      submitButton: {
+        backgroundColor: '#b63add',
+        hoverBackgroundColor: '#9c28bd',
+        textColor: '#ffffff',
+        shadowColor: '0 4px 6px -1px rgba(182, 58, 221, 0.3)',
+      },
     },
   },
 } as const
