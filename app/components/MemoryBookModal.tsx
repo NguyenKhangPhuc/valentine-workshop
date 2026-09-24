@@ -96,7 +96,6 @@ function ItemPageContent({
   const [isEditHovered, setIsEditHovered] = useState(false)
   const [isDeleteHovered, setIsDeleteHovered] = useState(false)
   const [isDropzoneHovered, setIsDropzoneHovered] = useState(false)
-  const [isRemoveImageHovered, setIsRemoveImageHovered] = useState(false)
   const [isChangeImageHovered, setIsChangeImageHovered] = useState(false)
 
   const imageContainerRef = useRef<HTMLDivElement>(null)
@@ -200,24 +199,6 @@ function ItemPageContent({
     }
   }
 
-  const handleRemoveImage = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    try {
-      await editMemoryPoster(
-        item,
-        null,
-        (updated) => {
-          setLocalImageUrl(null)
-          onImageChanged(updated.id, null)
-        },
-        showNotification
-      )
-    } catch (error) {
-      console.error('Failed to remove image:', error)
-    }
-  }
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null
@@ -297,24 +278,9 @@ function ItemPageContent({
           <div className="relative group w-full h-full rounded-lg overflow-hidden">
             <img src={localImageUrl} alt={item.name || 'Memory Image'} className="w-full h-full object-contain" />
             <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
               style={{ backgroundColor: colorManagement.memoryBookPage.itemPage.preview.overlayBackground }}
             >
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                onMouseEnter={() => setIsRemoveImageHovered(true)}
-                onMouseLeave={() => setIsRemoveImageHovered(false)}
-                className="px-3 py-1.5 font-semibold text-xs rounded-lg shadow cursor-pointer transition-colors"
-                style={{
-                  backgroundColor: isRemoveImageHovered
-                    ? colorManagement.memoryBookPage.itemPage.preview.removeButton.hoverBackgroundColor
-                    : colorManagement.memoryBookPage.itemPage.preview.removeButton.backgroundColor,
-                  color: colorManagement.memoryBookPage.itemPage.preview.removeButton.textColor,
-                }}
-              >
-                Remove
-              </button>
               <label
                 onClick={(e) => e.stopPropagation()}
                 onMouseEnter={() => setIsChangeImageHovered(true)}
