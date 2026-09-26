@@ -101,18 +101,7 @@ export async function editCollection(
      * - Inspect the server response; log error, display toast notification,
      *   and throw an Error if the update failed.
      */
-    // Invoke server action updateCollection to update the collection row in Supabase.
-    const res = await updateCollection(updatePayload)
-
-    // Check whether the database update returned an error.
-    if (res?.error) {
-      // Log update failure to the console for debugging.
-      console.error('Failed to update collection in database:', res.error)
-      // Display failure toast alert to the user.
-      showNotification?.('Failed to update collection: ' + res.error)
-      // Throw error to jump into catch block.
-      throw new Error(res.error)
-    }
+    // TODO: Invoke server action updateCollection(updatePayload) and handle any server errors.
 
     /**
      * --------------------------------------------------------------------------
@@ -125,24 +114,9 @@ export async function editCollection(
      * - Invoke `onSuccess` callback with the merged collection if provided.
      * - Return the updated `CollectionWithItems` record.
      */
-    // Merge updated fields with existing items and poster to preserve state.
-    const updatedCollection: CollectionWithItems = {
-      ...collection,
-      ...updatePayload,
-      poster_url: res.data?.poster_url ?? null,
-      collection_items: collection.collection_items ?? [],
-    }
+    // TODO: Merge updated fields with existing items, display success toast notification, invoke onSuccess callback, and return the updated collection.
+    const updatedCollection: CollectionWithItems = undefined as any
 
-    // Display a success toast notification to the user.
-    showNotification?.('Collection updated successfully!')
-
-    // Check if an onSuccess callback was provided.
-    if (onSuccess) {
-      // Invoke callback to pass merged collection to parent component.
-      onSuccess(updatedCollection)
-    }
-
-    // Return the updated collection object to caller.
     return updatedCollection
   } catch (error) {
     // Determine the error message string from caught error.

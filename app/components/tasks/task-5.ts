@@ -80,19 +80,6 @@ export function searchByTitleOrDescription(
    * - Check if `collection.description` contains `normalizedQuery`.
    * - Return only collections satisfying at least one match condition.
    */
-  // Filter collections array based on matching title or description.
-  return collections.filter((collection) => {
-    // Check if collection name exists and contains search term.
-    const nameMatch = collection.name
-      ? collection.name.toLowerCase().includes(normalizedQuery)
-      : false
-
-    // Check if collection description exists and contains search term.
-    const descriptionMatch = collection.description
-      ? collection.description.toLowerCase().includes(normalizedQuery)
-      : false
-
-    // Keep collection in filtered results if name or description matches.
-    return nameMatch || descriptionMatch
-  })
+  // TODO: Filter collections array based on matching title or description against normalizedQuery.
+  return []
 }

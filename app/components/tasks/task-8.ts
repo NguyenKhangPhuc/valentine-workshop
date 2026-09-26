@@ -80,51 +80,10 @@ export async function editMemoryPoster(
      * - Trigger success toast and invoke `onSuccess(updatedItem, true)`.
      * - Return the updated `CollectionItem` record.
      */
-    // Check if user provided an image file to upload or replace photo.
     if (file != null) {
-      // Define supported image MIME types for client-side validation.
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-      // Verify uploaded file type against permitted list.
-      if (!validTypes.includes(file.type.toLowerCase())) {
-        // Define format rejection error message.
-        const errorMsg = 'Unsupported image format. Please upload PNG, JPG, or WEBP images.'
-        // Display toast error notification to the user.
-        showNotification?.(errorMsg)
-        // Throw error to abort file upload.
-        throw new Error(errorMsg)
-      }
+      // TODO: Validate image MIME types, call server action updateCollectionItemPoster(item, file), create optimistic previewUrl, show toast, invoke onSuccess, and return updated item.
+      const updatedItem: CollectionItem = undefined as any
 
-      // Call server action updateCollectionItemPoster to upload to storage and update DB.
-      const res = await updateCollectionItemPoster(item, file)
-      // Check if server upload returned an error.
-      if (res?.error) {
-        // Log image upload error to console.
-        console.error('Failed to update memory image in storage:', res.error)
-        // Show failure toast notification to the user.
-        showNotification?.('Failed to update image: ' + res.error)
-        // Throw error to break out of execution.
-        throw new Error(res.error)
-      }
-
-      // Create client-side object URL for immediate optimistic UI preview.
-      const previewUrl = URL.createObjectURL(file)
-
-      // Assemble updated memory item state with new preview URL.
-      const updatedItem: CollectionItem = {
-        ...item,
-        image_url: previewUrl,
-      }
-
-      // Show success toast notification upon successful photo update.
-      showNotification?.('Memory photo updated successfully!')
-
-      // Check if onSuccess callback was provided.
-      if (onSuccess) {
-        // Invoke callback to pass updated item to parent state (isEdit = true).
-        onSuccess(updatedItem, true)
-      }
-
-      // Return the updated memory item record.
       return updatedItem
     }
 
@@ -139,34 +98,9 @@ export async function editMemoryPoster(
      * - Notify parent state via `onSuccess(clearedItem, false)` callback if provided.
      * - Return cleared `CollectionItem` record.
      */
-    // Handle case when file is null: call server action to delete photo from storage.
-    const res = await updateCollectionItemPoster(item, null)
-    // Check if removal server action returned an error.
-    if (res?.error) {
-      // Log storage removal error to console.
-      console.error('Failed to remove memory image from storage:', res.error)
-      // Show failure toast notification to user.
-      showNotification?.('Failed to remove image: ' + res.error)
-      // Throw error to enter catch block.
-      throw new Error(res.error)
-    }
+    // TODO: Call server action updateCollectionItemPoster(item, null), set image_url to null, show toast, invoke onSuccess, and return cleared item.
+    const clearedItem: CollectionItem = undefined as any
 
-    // Assemble updated memory item state with image_url cleared to null.
-    const clearedItem: CollectionItem = {
-      ...item,
-      image_url: null,
-    }
-
-    // Show success toast notification indicating photo removal.
-    showNotification?.('Memory photo removed successfully!')
-
-    // Check if onSuccess callback was provided.
-    if (onSuccess) {
-      // Invoke callback to notify parent state that image was removed (isEdit = false).
-      onSuccess(clearedItem, false)
-    }
-
-    // Return the cleared memory item object.
     return clearedItem
   } catch (error) {
     // Extract error message string from caught error object.

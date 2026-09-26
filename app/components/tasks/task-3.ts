@@ -76,21 +76,7 @@ export async function createMemory(
      * - Map form fields into `CollectionItemInsert`, defaulting `order` to 1.
      * - Initialize `image_url` to `null` prior to optional media file upload.
      */
-    // Assemble the database payload linking this memory to its parent collection.
-    const payload: CollectionItemInsert = {
-      // Assign foreign key of the parent collection.
-      collection_id: collectionId,
-      // Assign the validated memory title/name.
-      name: data.name,
-      // Provide optional description or fallback to null.
-      description: data.description || null,
-      // Assign optional memory date or fallback to null.
-      memory_date: data.memory_date || null,
-      // Set page display order, defaulting to page 1 if omitted.
-      order: data.order ?? 1,
-      // Initialize image URL as null before optional file upload.
-      image_url: null,
-    }
+    // TODO: Assemble the CollectionItemInsert payload with collection_id, name, description, memory_date, order, and image_url.
 
     /**
      * --------------------------------------------------------------------------
@@ -102,20 +88,7 @@ export async function createMemory(
      *   log error, and throw Error.
      * - Store newly created memory item with its generated ID.
      */
-    // Call server action createNewCollectionItem to insert the row in Supabase.
-    const res = await createNewCollectionItem(payload)
-
-    // Check if the server action failed or did not return inserted data.
-    if (res?.error || !res?.data) {
-      // Formulate error message from response or fallback string.
-      const errorMessage = res?.error ?? 'Failed to create memory item in the database.'
-      // Log database error to the developer console.
-      console.error(errorMessage)
-      // Display error notification toast to the user.
-      showNotification?.(errorMessage)
-      // Throw error to abort creation and enter catch block.
-      throw new Error(errorMessage)
-    }
+    // TODO: Call server action createNewCollectionItem(payload) and validate the database response.
 
     /**
      * --------------------------------------------------------------------------
@@ -128,38 +101,9 @@ export async function createMemory(
      * - Notify parent state via `onSuccess` callback if provided.
      * - Return the completed `CollectionItem` record.
      */
-    // Store the newly created memory record returned from database.
-    let newItem: CollectionItem = res.data
+    // TODO: Upload optional posterFile using updateCollectionItemPoster, trigger toast notification, invoke onSuccess, and return the completed item.
+    const newItem: CollectionItem = undefined as any
 
-    // Check if an image attachment file was provided by the user.
-    if (posterFile) {
-      // Upload image to storage bucket using item ID as directory prefix.
-      const resPoster = await updateCollectionItemPoster(newItem, posterFile)
-      // Verify storage upload succeeded and returned a storage path.
-      if (resPoster?.data && !resPoster.error) {
-        // Update local memory item representation with the uploaded image path.
-        newItem = {
-          ...newItem,
-          image_url: resPoster.data,
-        }
-      // Handle scenario where memory was created but file upload encountered an error.
-      } else if (resPoster?.error) {
-        // Log warning that record was created but image upload failed.
-        console.warn('Memory record created, but image upload failed:', resPoster.error)
-      }
-    }
-
-    // Display a success toast notification to the user.
-    showNotification?.('Memory item created successfully!')
-
-    // Check if an onSuccess callback was provided.
-    if (onSuccess) {
-      // Log new item and notify parent component with the completed record.
-      console.log(newItem)
-      onSuccess(newItem)
-    }
-
-    // Return the newly created memory item to the caller.
     return newItem
   } catch (error) {
     // Extract error message string from caught error object.

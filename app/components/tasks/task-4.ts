@@ -77,19 +77,7 @@ export async function editMemory(
      * - Map updated fields (`name`, `description`, `memory_date`, `order`),
      *   falling back empty fields to `null` to clear previous values in the database.
      */
-    // Assemble the partial update payload with item ID and edited fields.
-    const payload = {
-      // Target the existing memory item ID to update.
-      id: itemToEdit.id,
-      // Update memory name/title from validated form input.
-      name: data.name,
-      // Update narrative description or set to null if empty.
-      description: data.description || null,
-      // Update memory date or set to null if empty.
-      memory_date: data.memory_date || null,
-      // Update book page display order index.
-      order: data.order,
-    }
+    // TODO: Assemble the partial update payload targeting itemToEdit.id with updated name, description, memory_date, and order.
 
     /**
      * --------------------------------------------------------------------------
@@ -100,20 +88,7 @@ export async function editMemory(
      * - Verify update response; if error or missing data, display toast alert,
      *   log error, and throw Error.
      */
-    // Call server action updateCollectionItem to update the record in Supabase.
-    const res = await updateCollectionItem(payload)
-
-    // Check if the update query returned an error or missing data.
-    if (res?.error || !res?.data) {
-      // Derive error message from response or fallback text.
-      const errorMsg = res?.error ?? 'Failed to update memory item in the database.'
-      // Log update failure to the console.
-      console.error(errorMsg)
-      // Display toast notification alerting user to the failure.
-      showNotification?.(errorMsg)
-      // Throw error to break execution into catch block.
-      throw new Error(errorMsg)
-    }
+    // TODO: Call server action updateCollectionItem(payload) and handle errors.
 
     /**
      * --------------------------------------------------------------------------
@@ -125,22 +100,9 @@ export async function editMemory(
      * - Invoke `onSuccess(updatedItem, true)` callback to notify parent components of edit.
      * - Return the updated `CollectionItem` record.
      */
-    // Merge updated fields while safeguarding existing image_url.
-    const updatedItem: CollectionItem = {
-      ...res.data,
-      image_url: res.data.image_url,
-    }
+    // TODO: Merge returned data, show success toast notification, call onSuccess(updatedItem, true), and return the updated item.
+    const updatedItem: CollectionItem = undefined as any
 
-    // Display success toast notification upon successful update.
-    showNotification?.('Memory item updated successfully!')
-
-    // Check if an onSuccess callback was provided by parent component.
-    if (onSuccess) {
-      // Notify parent component that item was updated (isEdit = true).
-      onSuccess(updatedItem, true)
-    }
-
-    // Return the updated memory item record.
     return updatedItem
   } catch (error) {
     // Extract message from caught error object.

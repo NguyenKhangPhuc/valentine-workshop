@@ -47,8 +47,7 @@ export function onSortChange(
    * Specification:
    * - Invoke `setSortBy(newSort)` to notify React of the newly selected sorting mode.
    */
-  // Update state with the newly selected sorting option.
-  setSortBy(newSort)
+  // TODO: Update state with the newly selected sorting option using setSortBy(newSort).
 
   /**
    * --------------------------------------------------------------------------
@@ -57,8 +56,7 @@ export function onSortChange(
    * Specification:
    * - Call `setCurrentPage(1)` to return view to page 1, preventing stranded empty pages.
    */
-  // Reset pagination back to page 1 to prevent empty pages on re-sort.
-  setCurrentPage(1)
+  // TODO: Reset pagination back to page 1 using setCurrentPage(1) to prevent empty pages on re-sort.
 }
 
 /**
@@ -121,78 +119,39 @@ export function sortCollections(
         return timeB - timeA
       }
 
-      // Sort collections by oldest creation timestamp first.
+      // TODO: Implement case 'created_at_asc' - sort collections by oldest creation timestamp first.
       case 'created_at_asc': {
-        // Parse creation date of collection A into epoch milliseconds.
-        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
-        // Parse creation date of collection B into epoch milliseconds.
-        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
-        // Calculate ascending difference so older dates appear first.
-        return timeA - timeB
+        return 0
       }
 
-      // Sort collections alphabetically by name from A to Z.
+      // TODO: Implement case 'name_asc' - sort collections alphabetically by name from A to Z using localeCompare.
       case 'name_asc': {
-        // Retrieve name of collection A or empty string fallback.
-        const nameA = a.name || ''
-        // Retrieve name of collection B or empty string fallback.
-        const nameB = b.name || ''
-        // Compare names in ascending alphabetical order.
-        return nameA.localeCompare(nameB)
+        return 0
       }
 
-      // Sort collections alphabetically by name from Z to A.
+      // TODO: Implement case 'name_desc' - sort collections alphabetically by name from Z to A.
       case 'name_desc': {
-        // Retrieve name of collection A or empty string fallback.
-        const nameA = a.name || ''
-        // Retrieve name of collection B or empty string fallback.
-        const nameB = b.name || ''
-        // Compare names in descending alphabetical order.
-        return nameB.localeCompare(nameA)
+        return 0
       }
 
-      // Sort collections by memory count in descending order.
+      // TODO: Implement case 'items_desc' - sort collections by memory count in descending order.
       case 'items_desc': {
-        // Count number of memory items in collection A.
-        const countA = a.collection_items?.length || 0
-        // Count number of memory items in collection B.
-        const countB = b.collection_items?.length || 0
-        // Return descending difference so collections with most items appear first.
-        return countB - countA
+        return 0
       }
 
-      // Sort collections by memory count in ascending order.
+      // TODO: Implement case 'items_asc' - sort collections by memory count in ascending order.
       case 'items_asc': {
-        // Count number of memory items in collection A.
-        const countA = a.collection_items?.length || 0
-        // Count number of memory items in collection B.
-        const countB = b.collection_items?.length || 0
-        // Return ascending difference so collections with fewest items appear first.
-        return countA - countB
+        return 0
       }
 
-      // Sort collections by event start date in ascending order (earliest first).
+      // TODO: Implement case 'start_date_asc' - sort collections by event start date in ascending order (earliest first, sink missing dates).
       case 'start_date_asc': {
-        // Keep order if both collections have no start date.
-        if (!a.start_time && !b.start_time) return 0
-        // Place collection without start date after collection with date.
-        if (!a.start_time) return 1
-        // Place collection with start date before collection without date.
-        if (!b.start_time) return -1
-        // Compare start timestamps in ascending order.
-        return new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        return 0
       }
 
-      // Sort collections by event start date in descending order (latest first).
+      // TODO: Implement case 'start_date_desc' - sort collections by event start date in descending order (latest first, sink missing dates).
       case 'start_date_desc': {
-        // Keep order if both collections have no start date.
-        if (!a.start_time && !b.start_time) return 0
-        // Place collection without start date after collection with date.
-        if (!a.start_time) return 1
-        // Place collection with start date before collection without date.
-        if (!b.start_time) return -1
-        // Compare start timestamps in descending order.
-        return new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+        return 0
       }
 
       // Return 0 as default to preserve original order for unrecognized sort keys.
