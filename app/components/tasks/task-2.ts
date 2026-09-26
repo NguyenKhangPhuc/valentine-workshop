@@ -79,18 +79,12 @@ export async function editCollection(
      *   falling back empty fields to `null` to clear previous values in the database.
      */
     // Construct the partial update payload with the collection ID and form inputs.
-    const updatePayload = {
-      // Specify the target collection primary key ID to update.
-      id: collection.id,
-      // Set the updated collection title or name.
-      name: data.name,
-      // Set updated description or default to null if cleared.
-      description: data.description || null,
-      // Set updated start date string or default to null.
-      start_time: data.start_time || null,
-      // Set updated end date string or default to null.
-      end_time: data.end_time || null,
-    }
+    // Specify the target collection primary key ID to update.
+    // Set the updated collection title or name.
+    // Set updated description or default to null if cleared.
+    // Set updated start date string or default to null.
+    // Set updated end date string or default to null.
+    // TODO: Construct the partial update payload object here
 
     /**
      * --------------------------------------------------------------------------
@@ -101,7 +95,12 @@ export async function editCollection(
      * - Inspect the server response; log error, display toast notification,
      *   and throw an Error if the update failed.
      */
-    // TODO: Invoke server action updateCollection(updatePayload) and handle any server errors.
+    // Invoke server action updateCollection to update the collection row in Supabase.
+    // Check whether the database update returned an error.
+    // Log update failure to the console for debugging.
+    // Display failure toast alert to the user.
+    // Throw error to jump into catch block.
+    // TODO: Call server action updateCollection and handle error response here
 
     /**
      * --------------------------------------------------------------------------
@@ -114,9 +113,14 @@ export async function editCollection(
      * - Invoke `onSuccess` callback with the merged collection if provided.
      * - Return the updated `CollectionWithItems` record.
      */
-    // TODO: Merge updated fields with existing items, display success toast notification, invoke onSuccess callback, and return the updated collection.
-    const updatedCollection: CollectionWithItems = undefined as any
+    // Merge updated fields with existing items and poster to preserve state.
+    // Display a success toast notification to the user.
+    // Check if an onSuccess callback was provided.
+    // Invoke callback to pass merged collection to parent component.
+    // Return the updated collection object to caller.
+    // TODO: Merge updated fields, display toast notification, call onSuccess, and return updatedCollection
 
+    const updatedCollection: CollectionWithItems = undefined as any
     return updatedCollection
   } catch (error) {
     // Determine the error message string from caught error.

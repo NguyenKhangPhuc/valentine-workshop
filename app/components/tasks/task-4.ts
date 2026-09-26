@@ -77,7 +77,13 @@ export async function editMemory(
      * - Map updated fields (`name`, `description`, `memory_date`, `order`),
      *   falling back empty fields to `null` to clear previous values in the database.
      */
-    // TODO: Assemble the partial update payload targeting itemToEdit.id with updated name, description, memory_date, and order.
+    // Assemble the partial update payload with item ID and edited fields.
+    // Target the existing memory item ID to update.
+    // Update memory name/title from validated form input.
+    // Update narrative description or set to null if empty.
+    // Update memory date or set to null if empty.
+    // Update book page display order index.
+    // TODO: Assemble the partial update payload object here
 
     /**
      * --------------------------------------------------------------------------
@@ -88,7 +94,13 @@ export async function editMemory(
      * - Verify update response; if error or missing data, display toast alert,
      *   log error, and throw Error.
      */
-    // TODO: Call server action updateCollectionItem(payload) and handle errors.
+    // Call server action updateCollectionItem to update the record in Supabase.
+    // Check if the update query returned an error or missing data.
+    // Derive error message from response or fallback text.
+    // Log update failure to the console.
+    // Display toast notification alerting user to the failure.
+    // Throw error to break execution into catch block.
+    // TODO: Call server action updateCollectionItem and handle error response here
 
     /**
      * --------------------------------------------------------------------------
@@ -100,9 +112,14 @@ export async function editMemory(
      * - Invoke `onSuccess(updatedItem, true)` callback to notify parent components of edit.
      * - Return the updated `CollectionItem` record.
      */
-    // TODO: Merge returned data, show success toast notification, call onSuccess(updatedItem, true), and return the updated item.
-    const updatedItem: CollectionItem = undefined as any
+    // Merge updated fields while safeguarding existing image_url.
+    // Display success toast notification upon successful update.
+    // Check if an onSuccess callback was provided by parent component.
+    // Notify parent component that item was updated (isEdit = true).
+    // Return the updated memory item record.
+    // TODO: Merge updated fields, display success toast, call onSuccess, and return updatedItem
 
+    const updatedItem: CollectionItem = undefined as any
     return updatedItem
   } catch (error) {
     // Extract message from caught error object.

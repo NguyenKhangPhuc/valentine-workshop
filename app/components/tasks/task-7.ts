@@ -77,10 +77,47 @@ export async function editCollectionPoster(
      * - Assemble updated collection, trigger success toast, and invoke `onSuccess`.
      * - Return updated collection object.
      */
+    // Check if user provided a file to upload or replace poster.
     if (file != null) {
-      // TODO: Validate MIME types, call server action updateCollectionPoster(collection, file), create optimistic previewUrl, show toast, invoke onSuccess, and return updated collection.
+      // Define supported image MIME types for client-side validation.
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+      // Verify uploaded file format against valid MIME types list.
+      if (!validTypes.includes(file.type.toLowerCase())) {
+        // Define format rejection error message.
+        const errorMsg = 'Unsupported file format. Please upload PNG, JPG, or WEBP images.'
+        // Display toast error notification to the user.
+        showNotification?.(errorMsg)
+        // Throw error to abort file upload.
+        throw new Error(errorMsg)
+      }
+
+      // Call server action updateCollectionPoster to upload to storage and update DB.
+
+      // Check if server upload returned an error.
+
+      // Log storage upload error to console.
+
+      // Show failure toast notification to the user.
+
+      // Throw error to break out of execution.
+
+
+
+      // Create client-side object URL for immediate optimistic UI preview.
+      const previewUrl = URL.createObjectURL(file)
+
+      // Assemble updated collection state containing new preview URL.
       const updatedCollection: CollectionWithItems = undefined as any
 
+      // Show success toast notification upon successful poster update.
+      showNotification?.('Collection poster updated successfully!')
+
+      // Check if onSuccess callback was provided.
+      if (onSuccess) {
+        // Invoke callback to pass updated collection to parent state.
+      }
+
+      // Return the updated collection object.
       return updatedCollection
     }
 
@@ -95,9 +132,19 @@ export async function editCollectionPoster(
      * - Notify parent state via `onSuccess` callback if provided.
      * - Return cleared collection object.
      */
-    // TODO: Call server action updateCollectionPoster(collection, null), clear poster_url, show toast, invoke onSuccess, and return cleared collection.
-    const clearedCollection: CollectionWithItems = undefined as any
+    // Handle case when file is null: call server action to delete poster and set column null.
+    // Check if removal server action returned an error.
+    // Log storage removal error to console.
+    // Show failure toast notification to user.
+    // Throw error to enter catch block.
+    // Assemble updated collection state with poster_url cleared to null.
+    // Show success toast notification indicating poster removal.
+    // Check if onSuccess callback was provided.
+    // Invoke callback to notify parent state of poster removal.
+    // Return the cleared collection object.
+    // TODO: Implement Case B (delete / remove poster file) here
 
+    const clearedCollection: CollectionWithItems = undefined as any
     return clearedCollection
   } catch (error) {
     // Extract error message string from caught error object.

@@ -76,7 +76,14 @@ export async function createMemory(
      * - Map form fields into `CollectionItemInsert`, defaulting `order` to 1.
      * - Initialize `image_url` to `null` prior to optional media file upload.
      */
-    // TODO: Assemble the CollectionItemInsert payload with collection_id, name, description, memory_date, order, and image_url.
+    // Assemble the database payload linking this memory to its parent collection.
+    // Assign foreign key of the parent collection.
+    // Assign the validated memory title/name.
+    // Provide optional description or fallback to null.
+    // Assign optional memory date or fallback to null.
+    // Set page display order, defaulting to page 1 if omitted.
+    // Initialize image URL as null before optional file upload.
+    // TODO: Assemble the database payload (payload: CollectionItemInsert) here
 
     /**
      * --------------------------------------------------------------------------
@@ -88,7 +95,13 @@ export async function createMemory(
      *   log error, and throw Error.
      * - Store newly created memory item with its generated ID.
      */
-    // TODO: Call server action createNewCollectionItem(payload) and validate the database response.
+    // Call server action createNewCollectionItem to insert the row in Supabase.
+    // Check if the server action failed or did not return inserted data.
+    // Formulate error message from response or fallback string.
+    // Log database error to the developer console.
+    // Display error notification toast to the user.
+    // Throw error to abort creation and enter catch block.
+    // TODO: Call server action createNewCollectionItem and validate response here
 
     /**
      * --------------------------------------------------------------------------
@@ -101,9 +114,35 @@ export async function createMemory(
      * - Notify parent state via `onSuccess` callback if provided.
      * - Return the completed `CollectionItem` record.
      */
-    // TODO: Upload optional posterFile using updateCollectionItemPoster, trigger toast notification, invoke onSuccess, and return the completed item.
-    const newItem: CollectionItem = undefined as any
+    // Store the newly created memory record returned from database.
+    let newItem: CollectionItem = undefined as any
 
+    // Check if an image attachment file was provided by the user.
+    // TODO: Uncomment the code block below to enable image uploading:
+    /*
+    if (posterFile) {
+      // Upload image to storage bucket using item ID as directory prefix.
+      const resPoster = await updateCollectionItemPoster(newItem, posterFile)
+      // Verify storage upload succeeded and returned a storage path.
+      if (resPoster?.data && !resPoster.error) {
+        // Update local memory item representation with the uploaded image path.
+        newItem = {
+          ...newItem,
+          image_url: resPoster.data,
+        }
+      // Handle scenario where memory was created but file upload encountered an error.
+      } else if (resPoster?.error) {
+        // Log warning that record was created but image upload failed.
+        console.warn('Memory record created, but image upload failed:', resPoster.error)
+      }
+    }
+    */
+
+    // Display a success toast notification to the user.
+    // Check if an onSuccess callback was provided.
+    // Log new item and notify parent component with the completed record.
+    // Return the newly created memory item to the caller.
+    // TODO: Display success toast notification, notify parent state via onSuccess, and return newItem
     return newItem
   } catch (error) {
     // Extract error message string from caught error object.

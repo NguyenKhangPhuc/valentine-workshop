@@ -80,10 +80,27 @@ export async function editMemoryPoster(
      * - Trigger success toast and invoke `onSuccess(updatedItem, true)`.
      * - Return the updated `CollectionItem` record.
      */
+    // Check if user provided an image file to upload or replace photo.
     if (file != null) {
-      // TODO: Validate image MIME types, call server action updateCollectionItemPoster(item, file), create optimistic previewUrl, show toast, invoke onSuccess, and return updated item.
-      const updatedItem: CollectionItem = undefined as any
+      // Define supported image MIME types for client-side validation.
+      // Verify uploaded file type against permitted list.
+      // Define format rejection error message.
+      // Display toast error notification to the user.
+      // Throw error to abort file upload.
+      // Call server action updateCollectionItemPoster to upload to storage and update DB.
+      // Check if server upload returned an error.
+      // Log image upload error to console.
+      // Show failure toast notification to the user.
+      // Throw error to break out of execution.
+      // Create client-side object URL for immediate optimistic UI preview.
+      // Assemble updated memory item state with new preview URL.
+      // Show success toast notification upon successful photo update.
+      // Check if onSuccess callback was provided.
+      // Invoke callback to pass updated item to parent state (isEdit = true).
+      // Return the updated memory item record.
+      // TODO: Implement Case A (upload / replace photo attachment) here
 
+      const updatedItem: CollectionItem = undefined as any
       return updatedItem
     }
 
@@ -98,9 +115,19 @@ export async function editMemoryPoster(
      * - Notify parent state via `onSuccess(clearedItem, false)` callback if provided.
      * - Return cleared `CollectionItem` record.
      */
-    // TODO: Call server action updateCollectionItemPoster(item, null), set image_url to null, show toast, invoke onSuccess, and return cleared item.
-    const clearedItem: CollectionItem = undefined as any
+    // Handle case when file is null: call server action to delete photo from storage.
+    // Check if removal server action returned an error.
+    // Log storage removal error to console.
+    // Show failure toast notification to user.
+    // Throw error to enter catch block.
+    // Assemble updated memory item state with image_url cleared to null.
+    // Show success toast notification indicating photo removal.
+    // Check if onSuccess callback was provided.
+    // Invoke callback to notify parent state that image was removed (isEdit = false).
+    // Return the cleared memory item object.
+    // TODO: Implement Case B (delete / remove photo attachment) here
 
+    const clearedItem: CollectionItem = undefined as any
     return clearedItem
   } catch (error) {
     // Extract error message string from caught error object.

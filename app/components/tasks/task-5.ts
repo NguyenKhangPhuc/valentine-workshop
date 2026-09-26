@@ -47,11 +47,11 @@ export function searchByTitleOrDescription(
    * - Immediately return an empty array `[]` to avoid runtime evaluation errors.
    */
   // Check if collection array is empty or undefined.
+  // Return an empty array immediately when no collections exist.
   if (!collections || collections.length === 0) {
     // Return an empty array immediately when no collections exist.
     return []
   }
-
   /**
    * --------------------------------------------------------------------------
    * Step 2: Sanitize and normalize search query
@@ -62,6 +62,8 @@ export function searchByTitleOrDescription(
    * - Fast-path exit: return the unfiltered `collections` array if query is empty.
    */
   // Trim whitespace and convert query to lowercase for case-insensitive matching.
+  // Check if the normalized query is empty.
+  // Return the original collection array directly if no search keyword is given.
   const normalizedQuery = (query || '').trim().toLowerCase()
 
   // Check if the normalized query is empty.
@@ -69,7 +71,6 @@ export function searchByTitleOrDescription(
     // Return the original collection array directly if no search keyword is given.
     return collections
   }
-
   /**
    * --------------------------------------------------------------------------
    * Step 3: Filter collections using case-insensitive substring matching
@@ -80,6 +81,11 @@ export function searchByTitleOrDescription(
    * - Check if `collection.description` contains `normalizedQuery`.
    * - Return only collections satisfying at least one match condition.
    */
-  // TODO: Filter collections array based on matching title or description against normalizedQuery.
+  // Filter collections array based on matching title or description.
+  // Check if collection name exists and contains search term.
+  // Check if collection description exists and contains search term.
+  // Keep collection in filtered results if name or description matches.
+  // TODO: Filter collections array based on matching title or description and return results
+
   return []
 }

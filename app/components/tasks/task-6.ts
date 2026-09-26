@@ -1,32 +1,52 @@
 /**
  * ============================================================================
- * Task 6: Collection Sorting & Sort Change Handler
+ * Task 6: Sort Collections by Various Criteria
  * ============================================================================
  *
  * @file task-6.ts
  * @module components/tasks/task-6
  *
  * @description
- * This task manages sorting collections according to user-selected criteria.
- * It provides:
- * 1. `onSortChange`: An event handler that updates the active sort criteria and
- *    resets current pagination back to page 1.
- * 2. `sortCollections`: A pure, immutable sorting engine that sorts an array of
- *    collections by creation date, title, memory count, or start date.
+ * This task manages sorting and pagination resets for collections.
+ * It contains two functions:
+ * 1. `onSortChange`: Handles changing the active sort criteria and resetting pagination to page 1.
+ * 2. `sortCollections`: Pure function that sorts a collections array based on a selected criterion
+ *    without mutating the original array.
  *
  * @usedBy
  * - `CollectionToolbar.tsx` (`app/components/CollectionToolbar.tsx`)
+ *   Invoked when the user selects a sort option in the sorting dropdown.
  * - `CollectionListSection.tsx` (`app/components/CollectionListSection.tsx`)
- *   Invoked when the user selects a sort option from the sorting dropdown menu.
+ *   Invoked within the `useMemo` computation pipeline after filtering.
  */
 
 import { CollectionWithItems } from '../../types/collection'
-import { SortOption } from '../CollectionToolbar'
 
 /**
- * Handles a sort option change event: updates the sorting state and resets pagination.
+ * Supported sorting criteria for the collection list:
+ * - `created_at_desc`: Newest first (default)
+ * - `created_at_asc`: Oldest first
+ * - `name_asc`: Alphabetical A to Z
+ * - `name_desc`: Alphabetical Z to A
+ * - `items_desc`: Most memories first
+ * - `items_asc`: Fewest memories first
+ * - `start_date_asc`: Event start date earliest first
+ * - `start_date_desc`: Event start date latest first
+ */
+export type SortOption =
+  | 'created_at_desc'
+  | 'created_at_asc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'items_desc'
+  | 'items_asc'
+  | 'start_date_asc'
+  | 'start_date_desc'
+
+/**
+ * Handles sort criteria change by updating the state and resetting pagination back to page 1.
  *
- * @param {SortOption} newSort - The newly selected sorting option value.
+ * @param {SortOption} newSort - The newly selected sorting option.
  * @param {(sort: SortOption) => void} setSortBy - State setter function for the active sort criteria.
  * @param {(page: number) => void} setCurrentPage - State setter function for the current page number.
  *
@@ -47,7 +67,8 @@ export function onSortChange(
    * Specification:
    * - Invoke `setSortBy(newSort)` to notify React of the newly selected sorting mode.
    */
-  // TODO: Update state with the newly selected sorting option using setSortBy(newSort).
+  // Update state with the newly selected sorting option.
+  // TODO: Update state with the newly selected sorting option (setSortBy)
 
   /**
    * --------------------------------------------------------------------------
@@ -56,7 +77,8 @@ export function onSortChange(
    * Specification:
    * - Call `setCurrentPage(1)` to return view to page 1, preventing stranded empty pages.
    */
-  // TODO: Reset pagination back to page 1 using setCurrentPage(1) to prevent empty pages on re-sort.
+  // Reset pagination back to page 1 to prevent empty pages on re-sort.
+  // TODO: Reset pagination back to page 1 (setCurrentPage)
 }
 
 /**
@@ -119,38 +141,68 @@ export function sortCollections(
         return timeB - timeA
       }
 
-      // TODO: Implement case 'created_at_asc' - sort collections by oldest creation timestamp first.
+      // Sort collections by oldest creation timestamp first.
       case 'created_at_asc': {
+        // Parse creation date of collection A into epoch milliseconds.
+        // Parse creation date of collection B into epoch milliseconds.
+        // Calculate ascending difference so older dates appear first.
+        // TODO: Implement created_at_asc comparison
         return 0
       }
 
-      // TODO: Implement case 'name_asc' - sort collections alphabetically by name from A to Z using localeCompare.
+      // Sort collections alphabetically by name from A to Z.
       case 'name_asc': {
+        // Retrieve name of collection A or empty string fallback.
+        // Retrieve name of collection B or empty string fallback.
+        // Compare names in ascending alphabetical order.
+        // TODO: Implement name_asc comparison
         return 0
       }
 
-      // TODO: Implement case 'name_desc' - sort collections alphabetically by name from Z to A.
+      // Sort collections alphabetically by name from Z to A.
       case 'name_desc': {
+        // Retrieve name of collection A or empty string fallback.
+        // Retrieve name of collection B or empty string fallback.
+        // Compare names in descending alphabetical order.
+        // TODO: Implement name_desc comparison
         return 0
       }
 
-      // TODO: Implement case 'items_desc' - sort collections by memory count in descending order.
+      // Sort collections by memory count in descending order.
       case 'items_desc': {
+        // Count number of memory items in collection A.
+        // Count number of memory items in collection B.
+        // Return descending difference so collections with most items appear first.
+        // TODO: Implement items_desc comparison
         return 0
       }
 
-      // TODO: Implement case 'items_asc' - sort collections by memory count in ascending order.
+      // Sort collections by memory count in ascending order.
       case 'items_asc': {
+        // Count number of memory items in collection A.
+        // Count number of memory items in collection B.
+        // Return ascending difference so collections with fewest items appear first.
+        // TODO: Implement items_asc comparison
         return 0
       }
 
-      // TODO: Implement case 'start_date_asc' - sort collections by event start date in ascending order (earliest first, sink missing dates).
+      // Sort collections by event start date in ascending order (earliest first).
       case 'start_date_asc': {
+        // Keep order if both collections have no start date.
+        // Place collection without start date after collection with date.
+        // Place collection with start date before collection without date.
+        // Compare start timestamps in ascending order.
+        // TODO: Implement start_date_asc comparison
         return 0
       }
 
-      // TODO: Implement case 'start_date_desc' - sort collections by event start date in descending order (latest first, sink missing dates).
+      // Sort collections by event start date in descending order (latest first).
       case 'start_date_desc': {
+        // Keep order if both collections have no start date.
+        // Place collection without start date after collection with date.
+        // Place collection with start date before collection without date.
+        // Compare start timestamps in descending order.
+        // TODO: Implement start_date_desc comparison
         return 0
       }
 

@@ -74,21 +74,16 @@ export async function createCollection(
      * - Convert empty/undefined strings to `null` for clean database storage.
      * - Initialize `poster_url` to `null` (cover photos are uploaded via Task 7).
      */
-    // TODO: Complete the mapping of form inputs to database fields (CollectionInsert).
-    // - name: already assigned below as an example
-    // - description: map data.description, falling back to null if empty
-    // - start_time: map data.start_time, falling back to null if empty
-    // - end_time: map data.end_time, falling back to null if empty
-    // - poster_url: initialize to null (managed via Task 7)
+    // Map form inputs to database fields; set poster_url to null initially.
     const payload: CollectionInsert = {
       // Assign the validated collection name.
       name: data.name,
-      // TODO: Map optional description or fallback to null (e.g. data.description || null).
-      description: null,
-      // TODO: Map optional start date string or fallback to null (e.g. data.start_time || null).
-      start_time: null,
-      // TODO: Map optional end date string or fallback to null (e.g. data.end_time || null).
-      end_time: null,
+      // Provide optional description or fallback to null.
+      description: null, // TODO: Map data.description or fallback to null
+      // Provide optional start date or fallback to null.
+      start_time: null, // TODO: Map data.start_time or fallback to null
+      // Provide optional end date or fallback to null.
+      end_time: null, // TODO: Map data.end_time or fallback to null
       // Initialize cover photo as null (managed via Task 7).
       poster_url: null,
     }
